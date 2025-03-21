@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Request, Response, Router } from "express";
 import { userRouter } from "./user";
 import { spaceRouter } from "./space";
 import { adminRouter } from "./admin";
@@ -9,7 +9,7 @@ import jwt from "jsonwebtoken";
 import sanitizedConfig from "../../utils/config";
 export const router = Router();
 
-router.post("/signup", async (req, res) => {
+router.post("/signup", async (req: Request, res: Response) => {
   const parseData = SignupSchema.safeParse(req.body);
   if (!parseData.success) {
     res.status(400).json({
@@ -36,7 +36,7 @@ router.post("/signup", async (req, res) => {
     });
   }
 });
-router.post("/signin", async (req, res) => {
+router.post("/signin", async (req: Request, res: Response) => {
   const parseData = SigninSchema.safeParse(req.body);
   if (!parseData.success) {
     res.status(403).json({
@@ -80,8 +80,29 @@ router.post("/signin", async (req, res) => {
   }
 });
 
-router.get("/elements", (req, res) => {});
-router.get("/avatars", (req, res) => {});
+router.get("/elements", async (req: Request, res: Response) => {
+  const elements = await client.element.findMany();
+  res.json({
+    elements: elements.map((element) => ({
+      id: element.id,
+      width: element.width,
+      height: element.height,
+      static: element.static,
+      imageUrl: element.imageUrl,
+    })),
+  });
+});
+router.get("/avatars", async (req: Request, res: Response) => {
+  const avatars = await client.avatar.findMany();
+  res.json({
+    avatars: avatars.map((avatar) => ({
+      id: avatar.id,
+      name: avatar.name,
+      imageUrl: avatar.imageUrl,
+    })),
+  });
+});
+
 router.use("/user", userRouter);
 router.use("/space", spaceRouter);
 router.use("/admin", adminRouter);
