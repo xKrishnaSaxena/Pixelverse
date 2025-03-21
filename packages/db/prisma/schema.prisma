@@ -1,0 +1,81 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  username String  @unique
+  password String
+  avatarId String? @db.ObjectId
+  role     Role
+  spaces   Space[]
+  avatar   Avatar? @relation(fields: [avatarId], references: [id])
+}
+
+model Space {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  width     Int
+  height    Int
+  thumbnail String?
+  creatorId String  @db.ObjectId
+  creator   User    @relation(fields: [creatorId], references: [id])
+  elements  SpaceElement[]
+}
+
+model SpaceElement {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  elementId String @db.ObjectId
+  spaceId   String @db.ObjectId
+  x         Int
+  y         Int
+  space     Space  @relation(fields: [spaceId], references: [id])
+  element   Element @relation(fields: [elementId], references: [id])
+}
+
+model Element {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  width       Int
+  height      Int
+  static      Boolean
+  imageUrl    String
+  spaces      SpaceElement[]
+  mapElements MapElement[]
+}
+
+model Map {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  width      Int
+  height     Int
+  name       String
+  thumbnail  String
+  elements   MapElement[]
+}
+
+model MapElement {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  mapId     String @db.ObjectId
+  elementId String @db.ObjectId
+  x         Int?
+  y         Int?
+  map       Map     @relation(fields: [mapId], references: [id])
+  element   Element @relation(fields: [elementId], references: [id])
+}
+
+model Avatar {
+  id      String  @id @default(auto()) @map("_id") @db.ObjectId
+  imageUrl String?
+  name     String?
+  users    User[]
+}
+
+enum Role {
+  Admin
+  User
+}
