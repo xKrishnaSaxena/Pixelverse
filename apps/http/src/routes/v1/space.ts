@@ -24,6 +24,7 @@ spaceRouter.post("/", userMiddleware, async (req: Request, res: Response) => {
       },
     });
     res.json({ message: "Space created", spaceId: space.id });
+    return;
   }
   const map = await client.map.findFirst({
     where: {
@@ -59,6 +60,7 @@ spaceRouter.post("/", userMiddleware, async (req: Request, res: Response) => {
     return space;
   });
   res.json({ message: "Space created", spaceId: space.id });
+  return;
 });
 
 spaceRouter.delete(

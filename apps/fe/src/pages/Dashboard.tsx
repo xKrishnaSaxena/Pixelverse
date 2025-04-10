@@ -41,7 +41,7 @@ export default function Dashboard() {
 
   const handleJoinSpace = async () => {
     if (!spaceIdInput) return;
-    navigate(`/space/${spaceIdInput}`);
+    navigate(`/space/?token=${token}&spaceId=${spaceIdInput}`);
   };
 
   if (isLoading) {
@@ -97,7 +97,9 @@ export default function Dashboard() {
             <div
               key={space.id}
               className="bg-white bg-opacity-10 rounded-2xl p-6 cursor-pointer hover:bg-opacity-20 transition-all"
-              onClick={() => navigate(`/space/${space.id}`)}
+              onClick={() =>
+                navigate(`/space/?token=${token}&spaceId=${space.id}`)
+              }
             >
               {space.thumbnail && (
                 <img

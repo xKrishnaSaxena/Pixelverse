@@ -15,11 +15,11 @@ export default function CreateSpace() {
     setIsCreating(true);
     try {
       const response = await axios.post(
-        "/api/space",
+        "http://localhost:3000/api/v1/space",
         { name, dimensions },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      navigate(`/space/${response.data.spaceId}`);
+      navigate(`/space/?token=${token}&spaceId=${response.data.spaceId}`);
     } catch (error) {
       console.error("Error creating space:", error);
     } finally {
