@@ -9,10 +9,12 @@ userRouter.post(
   userMiddleware,
   async (req: Request, res: Response) => {
     const parseData = UpdateMetadataSchema.safeParse(req.body);
+    console.log(parseData);
     if (!parseData.success) {
       res.status(400).json({ message: "Validation error" });
       return;
     }
+    console.log("REACHED HERE");
     await client.user.update({
       where: { id: req.userId },
       data: { avatarId: parseData.data.avatarId },
