@@ -1,9 +1,8 @@
-// contexts/AvatarContext.tsx
 import { createContext, useContext, useState, ReactNode } from "react";
 
 type AvatarContextType = {
   avatars: Map<string, string>;
-  fetchAvatars: (userIds: string[]) => Promise<void>;
+  fetchAvatars: (usernames: string[]) => Promise<void>;
 };
 
 const AvatarContext = createContext<AvatarContextType | undefined>(undefined);
@@ -11,19 +10,26 @@ const AvatarContext = createContext<AvatarContextType | undefined>(undefined);
 export const AvatarProvider = ({ children }: { children: ReactNode }) => {
   const [avatars, setAvatars] = useState<Map<string, string>>(new Map());
 
-  const fetchAvatars = async (userIds: string[]) => {
-    if (userIds.length === 0) return;
+  const fetchAvatars = async (usernames: string[]) => {
+    if (usernames.length === 0) return;
 
     try {
+      const usernamesString = usernames.join(",");
+      console.log(usernamesString);
       const response = await fetch(
-        `/metadata/bulk?userIds=${encodeURIComponent(JSON.stringify(userIds))}`
+        `http://localhost:3000/api/v1/user/metadata/bulk?userIds=${usernamesString}`
       );
+      if (!response.ok) {
+        throw new Error(
+          `HTTP error! Status: ${response.status} - ${response.statusText}`
+        );
+      }
       const { avatars: avatarData } = await response.json();
 
       const newAvatars = new Map(avatars);
       avatarData.forEach(
-        ({ userId, avatarId }: { userId: string; avatarId: string }) => {
-          newAvatars.set(userId, avatarId || "/default-avatar.png");
+        ({ username, avatarId }: { username: string; avatarId: string }) => {
+          newAvatars.set(username, avatarId || "/gAvatarV2.png");
         }
       );
       setAvatars(newAvatars);
