@@ -192,23 +192,51 @@ export const Arena = () => {
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    // Clear the canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    ctx.strokeStyle = "#2D3748";
-    ctx.lineWidth = 1;
-    for (let i = 0; i < canvas.width; i += 50) {
-      ctx.beginPath();
-      ctx.moveTo(i, 0);
-      ctx.lineTo(i, canvas.height);
-      ctx.stroke();
-    }
-    for (let i = 0; i < canvas.height; i += 50) {
-      ctx.beginPath();
-      ctx.moveTo(0, i);
-      ctx.lineTo(canvas.width, i);
-      ctx.stroke();
-    }
+    // Draw background
+    ctx.fillStyle = "#90EE90"; // Light green for open space
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // Draw paths
+    ctx.fillStyle = "#A9A9A9"; // Gray for paths
+    const pathWidth = 50; // 1 grid cell wide
+    const horizontalPathRows = [5, 10, 15, 20, 25, 30, 35];
+    const verticalPathCols = [5, 10, 15, 20, 25, 30, 35];
+
+    // Horizontal paths
+    horizontalPathRows.forEach((y) => {
+      ctx.fillRect(0, y * 50, canvas.width, pathWidth);
+    });
+
+    // Vertical paths
+    verticalPathCols.forEach((x) => {
+      ctx.fillRect(x * 50, 0, pathWidth, canvas.height);
+    });
+
+    // Draw white center lines on paths
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.lineWidth = 2;
+
+    // Lines for horizontal paths
+    horizontalPathRows.forEach((y) => {
+      ctx.beginPath();
+      ctx.moveTo(0, y * 50 + 25); // Center of the 50px path
+      ctx.lineTo(canvas.width, y * 50 + 25);
+      ctx.stroke();
+    });
+
+    // Lines for vertical paths
+    verticalPathCols.forEach((x) => {
+      ctx.beginPath();
+      ctx.moveTo(x * 50 + 25, 0); // Center of the 50px path
+      ctx.lineTo(x * 50 + 25, canvas.height);
+      ctx.stroke();
+    });
+
+    // Draw current user's avatar
     if (currentUser?.x !== undefined && currentUser?.y !== undefined) {
       const avatar = avatars.get(currentUser.userId);
       const image = avatar
@@ -227,6 +255,7 @@ export const Arena = () => {
       ctx.fillText("You", currentUser.x * 50, currentUser.y * 50 + 50);
     }
 
+    // Draw other users' avatars
     users.forEach((user) => {
       if (!user.x || !user.y) return;
       const avatar = avatars.get(user.userId);
@@ -240,7 +269,6 @@ export const Arena = () => {
       ctx.fillText(user.userId, user.x * 50, user.y * 50 + 50);
     });
   }, [currentUser, users, loadedImages]);
-
   // Handle keyboard input
   const handleKeyDown = (e: any) => {
     if (!currentUser) return;

@@ -15,7 +15,7 @@ export default function Dashboard() {
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [spaceIdInput, setSpaceIdInput] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
   const navigate = useNavigate();
   console.log(spaces);
   useEffect(() => {
@@ -57,6 +57,14 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-900 to-purple-800 py-12 px-4">
+      <div className="absolute top-4 right-4">
+        <button
+          onClick={logout}
+          className="px-6 py-2 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg text-white font-semibold hover:from-red-600 hover:to-orange-600 transition-all"
+        >
+          Logout
+        </button>
+      </div>
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row gap-8 mb-12">
           <div className="flex-1 bg-white bg-opacity-10 p-6 rounded-2xl">

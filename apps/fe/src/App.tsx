@@ -1,8 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Arena } from "./pages/ArenaV5";
+import { Arena } from "./pages/ArenaV7";
 import AuthPage from "./pages/AuthForm";
 import Dashboard from "./pages/Dashboard";
-import UserUpdate from "./pages/UserUpdate";
 
 import { useAuth } from "./contexts/AuthContext";
 import { Navigate } from "react-router-dom";
@@ -22,15 +21,41 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/space" element={<Arena />} />
-        <Route path="/create-space" element={<CreateSpace />} />
-        <Route path="/avatar-selection" element={<AvatarSelection />} />
+        <Route
+          path="/space"
+          element={
+            <ProtectedRoute>
+              <Arena />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/create-space"
+          element={
+            <ProtectedRoute>
+              <CreateSpace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/avatar-selection"
+          element={
+            <ProtectedRoute>
+              <AvatarSelection />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/" element={<Dashboard />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/user-update" element={<UserUpdate />} />
-
-        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/auth" index element={<AuthPage />} />
       </Routes>
     </BrowserRouter>
   );
