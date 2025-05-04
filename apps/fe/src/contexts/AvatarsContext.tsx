@@ -15,7 +15,7 @@ export const AvatarProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const usernamesString = usernames.join(",");
-      console.log(usernamesString);
+
       const response = await fetch(
         `http://localhost:3000/api/v1/user/metadata/bulk?userIds=${usernamesString}`
       );

@@ -1,1 +1,1 @@
-{"root":["./global.d.ts","./src/RoomManager.ts","./src/User.ts","./src/index.ts","./src/utils/config.ts"],"version":"5.8.2"}
+{"root":["./global.d.ts","./src/RoomManager.ts","./src/RoomManagerV2.ts","./src/User.ts","./src/UserV2.ts","./src/index.ts","./src/utils/config.ts"],"version":"5.8.2"}

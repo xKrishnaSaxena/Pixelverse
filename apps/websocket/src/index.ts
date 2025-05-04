@@ -1,5 +1,5 @@
 import { WebSocketServer } from "ws";
-import { User } from "./User";
+import { User } from "./UserV2";
 
 const wss = new WebSocketServer({ port: 3001 });
 

@@ -25,14 +25,6 @@ export class RoomManager {
       this.rooms.get(spaceId)?.filter((u) => u.id !== user.id) ?? []
     );
   }
-  public broadcastToAll(message: OutgoingMessage, roomId: string) {
-    if (!this.rooms.has(roomId)) {
-      return;
-    }
-    this.rooms.get(roomId)?.forEach((u) => {
-      u.send(message);
-    });
-  }
 
   public addUser(spaceId: string, user: User) {
     if (!this.rooms.has(spaceId)) {
@@ -50,6 +42,16 @@ export class RoomManager {
       if (u.id !== user.id) {
         u.send(message);
       }
+    });
+  }
+
+  // New method to broadcast to all users in a room, including the sender
+  public broadcastToAll(message: OutgoingMessage, roomId: string) {
+    if (!this.rooms.has(roomId)) {
+      return;
+    }
+    this.rooms.get(roomId)?.forEach((u) => {
+      u.send(message);
     });
   }
 }

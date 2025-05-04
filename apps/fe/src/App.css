@@ -40,3 +40,6 @@
 .read-the-docs {
   color: #888;
 }
+.block-button {
+  transition: all 0.2s ease-in-out;
+}
