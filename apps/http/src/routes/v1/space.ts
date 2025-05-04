@@ -7,7 +7,10 @@ import {
 import client from "@repo/db/src/index";
 import { userMiddleware } from "../../middleware";
 export const spaceRouter = Router();
-
+interface BannedUsers {
+  id: string;
+  username: string;
+}
 spaceRouter.post("/", userMiddleware, async (req: Request, res: Response) => {
   const parseData = CreateSpaceSchema.safeParse(req.body);
   if (!parseData.success) {
@@ -199,6 +202,19 @@ spaceRouter.get(
       res.status(400).json({ message: "Space not found" });
       return;
     }
+    const isCreator = space.creatorId === req.userId;
+    let bannedUsers: BannedUsers[] = [];
+    if (isCreator) {
+      bannedUsers = await client.user.findMany({
+        where: {
+          username: { in: space.bannedUsers },
+        },
+        select: {
+          id: true,
+          username: true,
+        },
+      });
+    }
     res.json({
       dimensions: `${space.width}x${space.height}`,
       name: space.name,
@@ -215,6 +231,39 @@ spaceRouter.get(
           imageUrl: e.element.imageUrl,
         },
       })),
+      bannedUsers: isCreator ? bannedUsers : undefined,
     });
+  }
+);
+spaceRouter.post(
+  "/:spaceId/unban",
+  userMiddleware,
+  async (req: Request, res: Response) => {
+    const spaceId = req.params.spaceId;
+    const userIdToUnban = req.body.userId;
+    if (!userIdToUnban) {
+      res.status(400).json({ message: "User ID is required" });
+      return;
+    }
+    const space = await client.space.findUnique({
+      where: { id: spaceId },
+      select: { creatorId: true, bannedUsers: true },
+    });
+    if (!space) {
+      res.status(404).json({ message: "Space not found" });
+      return;
+    }
+    if (space.creatorId !== req.userId) {
+      res.status(403).json({ message: "Unauthorized" });
+      return;
+    }
+    const updatedBannedUsers = space.bannedUsers.filter(
+      (username) => username !== userIdToUnban
+    );
+    await client.space.update({
+      where: { id: spaceId },
+      data: { bannedUsers: { set: updatedBannedUsers } },
+    });
+    res.json({ message: "User unbanned successfully" });
   }
 );

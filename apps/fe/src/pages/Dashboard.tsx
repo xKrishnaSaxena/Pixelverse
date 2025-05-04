@@ -119,7 +119,16 @@ export default function Dashboard() {
               <h3 className="text-xl font-semibold text-black mb-2">
                 {space.name}
               </h3>
-              <p className="text-gray-300">Dimensions: {space.dimensions}</p>
+              <p className="text-gray-300">Dimensions: {space.dimensions} km</p>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/manage-space/${space.id}`);
+                }}
+                className="mt-4 px-4 py-2 bg-blue-500 rounded-lg text-white font-semibold hover:bg-blue-600 transition-all"
+              >
+                Manage
+              </button>
             </div>
           ))}
         </div>

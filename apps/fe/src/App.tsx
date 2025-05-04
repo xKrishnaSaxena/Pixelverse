@@ -8,6 +8,7 @@ import { Navigate } from "react-router-dom";
 import { JSX } from "react";
 import AvatarSelection from "./pages/AvatarSelection";
 import CreateSpace from "./pages/SpaceCreate";
+import ManageSpace from "./pages/ManageSpace";
 
 export const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, isLoading } = useAuth();
@@ -51,6 +52,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manage-space/:spaceId"
+          element={
+            <ProtectedRoute>
+              <ManageSpace />
             </ProtectedRoute>
           }
         />
