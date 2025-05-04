@@ -27,6 +27,7 @@ model Space {
   creatorId String  @db.ObjectId
   creator   User    @relation(fields: [creatorId], references: [id])
   elements  SpaceElement[]
+  bannedUsers String[]
 }
 
 model SpaceElement {
@@ -78,4 +79,12 @@ model Avatar {
 enum Role {
   Admin
   User
+}
+
+model ChatMessage {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  spaceId   String
+  userId    String
+  message   String
+  timestamp DateTime @default(now())
 }
