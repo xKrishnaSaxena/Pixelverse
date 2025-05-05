@@ -1,84 +1,97 @@
-# Turborepo starter
+# Pixelverse: 2D Metaverse with Real-Time Chat Analysis
 
-This Turborepo starter is maintained by the Turborepo core team.
+Welcome to **Pixelverse**, a dynamic 2D metaverse platform that enables real-time communication, private and group interaction, and a secure space-based virtual experience. Built using a Turborepo monorepo structure, the project includes an HTTP server, WebSocket server, frontend client, and database setup.
 
-## Using this example
+---
 
-Run the following command:
+## 🚀 Features
 
-```sh
-npx create-turbo@latest
-```
+### 🔐 User Authentication
+- Users can securely register and authenticate.
+- Avatar selection is available upon login.
 
-## What's inside?
+### 🧱 Space Creation & Joining
+- Authenticated users can **create** a virtual space.
+- Each space generates a unique **Space ID**.
+- Other users can **join the space** using the Space ID.
 
-This Turborepo includes the following packages/apps:
+### 🕹️ Real-Time Multiplayer Movement
+- Users can freely move their avatars in a shared 2D space.
+- Movements are synchronized using WebSockets for real-time updates.
 
-### Apps and Packages
+### 💬 Chat System
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+#### Global Chat
+- All players in the space can communicate via a shared group chat.
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+#### Private Proximity Chat
+- Private messaging is enabled when two users are within **2 pixels of distance**.
+- This encourages organic and local in-space communication.
 
-### Utilities
+#### Blocking Mechanism
+- Users can **block** others in private chat.
+- Once blocked, the other user cannot initiate or continue the private conversation.
 
-This Turborepo has some additional tools already setup for you:
+### 🛡️ Real-Time Chat Moderation
+- Offensive or inappropriate language is detected using a **bad words filter**.
+- **Warning System**:
+  - First and second offenses trigger a **warning message**.
+  - On the **third offense**, the user is **automatically removed** from the space.
+- **Banning Mechanism**:
+  - Banned users cannot rejoin the space unless **unbanned by the creator**.
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+---
 
-### Build
+## 🧰 Tech Stack
 
-To build all apps and packages, run the following command:
+- **Monorepo**: Turborepo
+- **Frontend**: React , Tailwind
+- **Backend**:
+  - HTTP Server: Express , Zod (Validation)
+  - WebSocket Server: WS
+- **Database**: MongoDB
+- **Authentication**: JWT
 
-```
-cd my-turborepo
-pnpm build
-```
+---
 
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm dev
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+## 📁 Project Structure
 
 ```
-cd my-turborepo
-npx turbo login
+Pixelverse/
+├── apps/
+│ ├── http/ # HTTP server (auth, space mgmt)
+│ ├── ws/ # WebSocket server (real-time movement, chat)
+│ └── frontend/ # Client-side UI
+├── packages/
+│ └── db/ # DB models and setup
+├── .gitignore
+├── package.json
+├── turbo.json
+└── README.md
+
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+## 🖼️ Demo / Screenshots
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+### 🔐 Authentication & Avatar Selection
+![Authentication Screenshot](link_to_image)
 
-```
-npx turbo link
-```
+### 🧱 Creating & Joining a Space
+![Space Creation Screenshot](link_to_image)
 
-## Useful Links
+### 🕹️ Multiplayer Movement
+![Movement Screenshot](link_to_image)
 
-Learn more about the power of Turborepo:
+### 💬 Group & Private Chat
+![Chat Screenshot](link_to_image)
 
-- [Tasks](https://turbo.build/repo/docs/core-concepts/monorepos/running-tasks)
-- [Caching](https://turbo.build/repo/docs/core-concepts/caching)
-- [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching)
-- [Filtering](https://turbo.build/repo/docs/core-concepts/monorepos/filtering)
-- [Configuration Options](https://turbo.build/repo/docs/reference/configuration)
-- [CLI Usage](https://turbo.build/repo/docs/reference/command-line-reference)
+### ⚠️ Warning & Ban Message
+![Warning Screenshot](link_to_image)
+
+---
+
+## 📌 Repository
+
+🔗 GitHub: [https://github.com/xKrishnaSaxena/Pixelverse](https://github.com/xKrishnaSaxena/Pixelverse)
+
+---
