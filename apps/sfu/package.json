@@ -1,0 +1,17 @@
+{
+  "name": "sfu",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsc -b && node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "mediasoup": "^3.16.0",
+    "mediasoup-client": "^3.11.0"
+  }
+}
