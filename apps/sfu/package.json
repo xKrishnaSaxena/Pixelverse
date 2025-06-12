@@ -12,6 +12,6 @@
   "description": "",
   "dependencies": {
     "mediasoup": "^3.16.0",
-    "mediasoup-client": "^3.11.0"
+    "ws": "^8.18.2"
   }
 }

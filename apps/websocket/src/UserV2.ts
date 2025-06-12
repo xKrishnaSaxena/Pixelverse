@@ -139,11 +139,26 @@ const bannedWords = [
 export class User {
   public id: string;
   public userId?: string;
-  private spaceId?: string;
-  private x: number;
-  private y: number;
+  public spaceId?: string;
+  public x: number;
+  public y: number;
   private ws: WebSocket;
   private violationCount: number = 0;
+  private callSessionId?: string; // Tracks the user's current call session
+  private inCall: boolean = false;
+
+  public getCallSessionId(): string | undefined {
+    return this.callSessionId;
+  }
+
+  public setCallSessionId(sessionId: string | undefined) {
+    this.callSessionId = sessionId;
+    this.inCall = !!sessionId;
+  }
+
+  public isInCall(): boolean {
+    return this.inCall;
+  }
 
   constructor(ws: WebSocket) {
     this.id = getRandomString(10);
@@ -330,6 +345,26 @@ export class User {
               y: this.y,
             },
           });
+          break;
+
+        case "offer":
+        case "answer":
+        case "ice_candidate":
+          const sessionId = this.callSessionId;
+          if (sessionId) {
+            const roomUsers = RoomManager.getInstance().rooms.get(
+              this.spaceId!
+            );
+            roomUsers?.forEach((u) => {
+              if (u.getCallSessionId() === sessionId && u.id !== this.id) {
+                u.send(parsedData);
+              }
+            });
+          }
+          break;
+
+        case "leave_call":
+          this.setCallSessionId(undefined);
           break;
       }
     });

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAvatar } from "../contexts/AvatarsContext";
+import { useVideoCall } from "../hooks/useVideoCall";
 const GRID_SIZE = 50;
 const AVATAR_SIZE = 80;
 const PATH_WIDTH = 50;
@@ -30,6 +31,13 @@ export const Arena = () => {
     Map<string, { x: number; y: number; opacity: number }[]>
   >(new Map());
   const [isKicked, setIsKicked] = useState(false);
+  const [callSessionId, setCallSessionId] = useState<string | null>(null);
+  const [sfuUrl, setSfuUrl] = useState<string | null>(null);
+  const { localStream, remoteStreams } = useVideoCall(
+    wsRef.current,
+    callSessionId,
+    sfuUrl
+  );
 
   const toggleBlockUser = (userId: string) => {
     setBlockedUsers((prev) => {
@@ -372,6 +380,16 @@ export const Arena = () => {
             timestamp: Date.now(),
           },
         ]);
+        break;
+
+      case "start_call":
+      case "join_call":
+        setCallSessionId(message.payload.sessionId);
+        setSfuUrl(message.payload.sfuUrl);
+        break;
+      case "leave_call":
+        setCallSessionId(null);
+        setSfuUrl(null);
         break;
     }
   };
@@ -1087,6 +1105,47 @@ export const Arena = () => {
           </div>
         </div>
       </div>
+
+      {callSessionId && (
+        <div className="absolute bottom-4 left-4 bg-gray-800 p-4 rounded-lg shadow-lg flex flex-col gap-2">
+          <h3 className="text-lg font-semibold">Video Call</h3>
+          <div className="flex gap-2">
+            {localStream && (
+              <video
+                autoPlay
+                muted
+                className="w-32 h-24 rounded"
+                ref={(video) => {
+                  if (video) video.srcObject = localStream;
+                }}
+              />
+            )}
+            {Array.from(remoteStreams.entries()).map(([userId, stream]) => (
+              <video
+                key={userId}
+                autoPlay
+                className="w-32 h-24 rounded"
+                ref={(video) => {
+                  if (video) video.srcObject = stream;
+                }}
+              />
+            ))}
+          </div>
+          <button
+            onClick={() =>
+              wsRef.current?.send(
+                JSON.stringify({
+                  type: "leave_call",
+                  payload: { sessionId: callSessionId },
+                })
+              )
+            }
+            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+          >
+            Leave Call
+          </button>
+        </div>
+      )}
     </div>
   );
 };
