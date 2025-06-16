@@ -1,5 +1,5 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Arena } from "./pages/ArenaV18";
+import { Arena } from "./pages/ArenaV19";
 import AuthPage from "./pages/AuthForm";
 import Dashboard from "./pages/Dashboard";
 
