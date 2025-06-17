@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAvatar } from "../contexts/AvatarsContext";
+import { useAuth } from "../contexts/AuthContext";
 import ReactPlayer from "react-player";
 import peer from "../contexts/peerContext";
 
@@ -26,7 +27,7 @@ export const Arena = () => {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [currentUser, setCurrentUser] = useState<any>({});
   const [users, setUsers] = useState(new Map<string, any>());
-  const [params, setParams] = useState({ token: "", spaceId: "" });
+  const [spaceId, setSpaceId] = useState(""); // Replace params with spaceId
   const [blockedUsers, setBlockedUsers] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredUser, setHoveredUser] = useState<string | null>(null);
@@ -44,6 +45,8 @@ export const Arena = () => {
   const [userCallStatus, setUserCallStatus] = useState<
     Map<string, string | null>
   >(new Map());
+
+  const { token, isLoading } = useAuth();
 
   const toggleBlockUser = (userId: string) => {
     setBlockedUsers((prev) => {
@@ -319,9 +322,12 @@ export const Arena = () => {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("token") || "";
-    const spaceId = urlParams.get("spaceId") || "";
-    setParams({ token, spaceId });
+    const spaceIdFromUrl = urlParams.get("spaceId") || "";
+    setSpaceId(spaceIdFromUrl);
+  }, []);
+
+  useEffect(() => {
+    if (isLoading || !token || !spaceId) return;
 
     wsRef.current = new WebSocket("ws://localhost:3001");
     wsRef.current.onopen = () => {
@@ -334,7 +340,7 @@ export const Arena = () => {
       handleWebSocketMessage(message);
     };
     return () => wsRef.current?.close();
-  }, []);
+  }, [isLoading, token, spaceId]);
 
   const handleWebSocketMessage = useCallback(
     (message: any) => {
@@ -1106,7 +1112,8 @@ export const Arena = () => {
           <div className="flex justify-center gap-4 mb-4">
             <div className="bg-gray-800 rounded-lg p-3 shadow-lg">
               <p className="text-sm text-blue-400">Space ID</p>
-              <p className="font-mono">{params.spaceId}</p>
+              <p className="font-mono">{spaceId}</p>{" "}
+              {/* Update to use spaceId */}
             </div>
             <div className="bg-gray-800 rounded-lg p-3 shadow-lg">
               <p className="text-sm text-purple-400">Connected Players</p>
