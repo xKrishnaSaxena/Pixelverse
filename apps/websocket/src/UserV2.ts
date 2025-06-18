@@ -110,26 +110,11 @@ const bannedWords = [
 export class User {
   public id: string;
   public userId?: string;
-  public spaceId?: string;
-  public x: number;
-  public y: number;
+  private spaceId?: string;
+  private x: number;
+  private y: number;
   private ws: WebSocket;
   private violationCount: number = 0;
-  private callSessionId?: string; // Tracks the user's current call session
-  private inCall: boolean = false;
-
-  public getCallSessionId(): string | undefined {
-    return this.callSessionId;
-  }
-
-  public setCallSessionId(sessionId: string | undefined) {
-    this.callSessionId = sessionId;
-    this.inCall = !!sessionId;
-  }
-
-  public isInCall(): boolean {
-    return this.inCall;
-  }
 
   constructor(ws: WebSocket) {
     this.id = getRandomString(10);
@@ -297,20 +282,6 @@ export class User {
           });
           break;
 
-<<<<<<< HEAD
-        case "offer":
-        case "answer":
-        case "ice_candidate":
-          const sessionId = this.callSessionId;
-          if (sessionId) {
-            const roomUsers = RoomManager.getInstance().rooms.get(
-              this.spaceId!
-            );
-            roomUsers?.forEach((u) => {
-              if (u.getCallSessionId() === sessionId && u.id !== this.id) {
-                u.send(parsedData);
-              }
-=======
         case "call-user":
           const targetUserId = parsedData.payload.targetUserId;
           const offer = parsedData.payload.offer;
@@ -321,15 +292,10 @@ export class User {
             targetUser.send({
               type: "video-call-incoming",
               payload: { from: this.userId!, offer },
->>>>>>> feature/webrtc-integration
             });
           }
           break;
 
-<<<<<<< HEAD
-        case "leave_call":
-          this.setCallSessionId(undefined);
-=======
         case "call-accepted":
           const toUserId = parsedData.payload.toUserId;
           const answer = parsedData.payload.answer;
@@ -407,7 +373,6 @@ export class User {
               payload: { candidate, from: this.userId! },
             });
           }
->>>>>>> feature/webrtc-integration
           break;
       }
     });
