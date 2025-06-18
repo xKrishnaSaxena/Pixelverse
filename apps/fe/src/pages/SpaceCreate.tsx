@@ -19,7 +19,7 @@ export default function CreateSpace() {
         { name, dimensions },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      navigate(`/space/?token=${token}&spaceId=${response.data.spaceId}`);
+      navigate(`/space/?spaceId=${response.data.spaceId}`);
     } catch (error) {
       console.error("Error creating space:", error);
     } finally {

@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
 import { useState, useEffect } from "react";
@@ -17,7 +17,6 @@ interface SpaceDetails {
 export default function ManageSpace() {
   const { spaceId } = useParams();
   const { token } = useAuth();
-  const navigate = useNavigate();
   const [space, setSpace] = useState<SpaceDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +43,7 @@ export default function ManageSpace() {
 
   const handleUnban = async (userId: string) => {
     try {
-      const res1 = await axios.post(
+      await axios.post(
         `http://localhost:3000/api/v1/space/${spaceId}/unban`,
         { userId },
         {

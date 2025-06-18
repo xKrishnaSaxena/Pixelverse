@@ -17,7 +17,6 @@ function getRandomString(length: number) {
 }
 
 const bannedWords = [
-  // Explicit sexual terms
   "fuck",
   "fucker",
   "fucking",
@@ -35,8 +34,6 @@ const bannedWords = [
   "slut",
   "blowjob",
   "jerkoff",
-
-  // Excretory/body-related
   "crap",
   "poop",
   "piss",
@@ -45,8 +42,6 @@ const bannedWords = [
   "fart",
   "turd",
   "shat",
-
-  // Derogatory/insulting terms
   "idiot",
   "moron",
   "retard",
@@ -62,69 +57,45 @@ const bannedWords = [
   "git",
   "slag",
   "cunt",
-
-  // Racial/ethnic slurs
   "nigger",
   "nigga",
   "k*ke",
   "sp*c",
   "ch*nk",
   "g*psy",
-  "retard",
   "m*ng",
-
-  // Racial/ethnic slurs (censored examples)
   "n****r",
   "n*gga",
-  "k*ke",
-  "sp*c",
-  "ch*nk",
-  "g*psy",
-  "r*tard",
-  "m*ng",
-
-  // Homophobic/sexist slurs
   "fag",
   "faggot",
   "dyke",
   "queer",
   "tranny",
   "shemale",
-  "whore",
   "hoe",
-
-  // Religious profanity
   "hell",
   "damn",
   "godamn",
   "jesuschrist",
   "bloody",
-
-  // Violence/threats
   "kill",
   "murder",
   "stab",
   "die",
   "suicide",
   "rapist",
-
-  // Internet slang/abbreviations
   "wtf",
   "stfu",
   "ffs",
   "omfg",
   "pos",
   "sob",
-
-  // Misspellings/symbol replacements
   "@ss",
   "b!tch",
   "f*ck",
   "d!ck",
   "5hit",
   "a$$",
-
-  // Additional harsh terms
   "incest",
   "pedo",
   "nazi",
@@ -209,30 +180,27 @@ export class User {
             RoomManager.getInstance().rooms.get(spaceId)?.length || 0;
           this.x = 5 + existingUsers;
           this.y = 5 + existingUsers;
+
+          const roomCalls =
+            RoomManager.getInstance().ongoingCalls.get(spaceId) || new Map();
           this.send({
             type: "space-joined",
             payload: {
               userId: this.userId,
-              spawn: {
-                x: this.x,
-                y: this.y,
-              },
+              spawn: { x: this.x, y: this.y },
               users:
                 RoomManager.getInstance()
                   .rooms.get(spaceId)
                   ?.filter((x) => x.id !== this.id)
                   ?.map((u) => ({ userId: u.userId, x: u.x, y: u.y })) ?? [],
+              ongoingCalls: Array.from(roomCalls.entries()),
             },
           });
 
           RoomManager.getInstance().broadcast(
             {
               type: "user-joined",
-              payload: {
-                userId: this.userId,
-                x: this.x,
-                y: this.y,
-              },
+              payload: { userId: this.userId, x: this.x, y: this.y },
             },
             this,
             this.spaceId!
@@ -241,14 +209,11 @@ export class User {
 
         case "chat-message":
           const message = parsedData.payload.message;
-
           if (parsedData.payload.isGlobal) {
-            // Check for profanity
             const containsProfanity = bannedWords.some((word) =>
               message.toLowerCase().includes(word.toLowerCase())
             );
 
-            // Store the message in the database
             await client.chatMessage.create({
               data: {
                 spaceId: this.spaceId!,
@@ -272,7 +237,6 @@ export class User {
               return;
             }
 
-            // Broadcast global message to all users in the space
             RoomManager.getInstance().broadcastToAll(
               {
                 type: "chat-message",
@@ -285,12 +249,10 @@ export class User {
               this.spaceId!
             );
           } else {
-            // Handle private messages
             const recipientId = parsedData.payload.recipient;
             const recipient = RoomManager.getInstance()
               .rooms.get(this.spaceId!)
               ?.find((u) => u.userId === recipientId);
-
             if (recipient) {
               recipient.send({
                 type: "chat-message",
@@ -318,35 +280,24 @@ export class User {
             RoomManager.getInstance().broadcast(
               {
                 type: "movement",
-                payload: {
-                  userId: this.userId,
-                  x: this.x,
-                  y: this.y,
-                },
+                payload: { userId: this.userId, x: this.x, y: this.y },
               },
               this,
               this.spaceId!
             );
             this.send({
               type: "movement",
-              payload: {
-                userId: this.userId,
-                x: this.x,
-                y: this.y,
-              },
+              payload: { userId: this.userId, x: this.x, y: this.y },
             });
             return;
           }
-
           this.send({
             type: "movement-rejected",
-            payload: {
-              x: this.x,
-              y: this.y,
-            },
+            payload: { x: this.x, y: this.y },
           });
           break;
 
+<<<<<<< HEAD
         case "offer":
         case "answer":
         case "ice_candidate":
@@ -359,12 +310,104 @@ export class User {
               if (u.getCallSessionId() === sessionId && u.id !== this.id) {
                 u.send(parsedData);
               }
+=======
+        case "call-user":
+          const targetUserId = parsedData.payload.targetUserId;
+          const offer = parsedData.payload.offer;
+          const targetUser = RoomManager.getInstance()
+            .rooms.get(this.spaceId!)
+            ?.find((u) => u.userId === targetUserId);
+          if (targetUser) {
+            targetUser.send({
+              type: "video-call-incoming",
+              payload: { from: this.userId!, offer },
+>>>>>>> feature/webrtc-integration
             });
           }
           break;
 
+<<<<<<< HEAD
         case "leave_call":
           this.setCallSessionId(undefined);
+=======
+        case "call-accepted":
+          const toUserId = parsedData.payload.toUserId;
+          const answer = parsedData.payload.answer;
+          const toUser = RoomManager.getInstance()
+            .rooms.get(this.spaceId!)
+            ?.find((u) => u.userId === toUserId);
+          if (toUser) {
+            toUser.send({
+              type: "call-accepted",
+              payload: { answer, from: this.userId! },
+            });
+            RoomManager.getInstance().startCall(
+              this.spaceId!,
+              this.userId!,
+              toUserId
+            );
+          }
+          break;
+
+        case "call-end":
+          const endToUserId = parsedData.payload.toUserId;
+          const endUser = RoomManager.getInstance()
+            .rooms.get(this.spaceId!)
+            ?.find((u) => u.userId === endToUserId);
+          if (endUser) {
+            endUser.send({
+              type: "call-end",
+              payload: { from: this.userId! },
+            });
+            RoomManager.getInstance().endCall(
+              this.spaceId!,
+              this.userId!,
+              endToUserId
+            );
+          }
+          break;
+
+        case "peer:negotiation-needed":
+          const negoToUserId = parsedData.payload.toUserId;
+          const negoOffer = parsedData.payload.offer;
+          const negoUser = RoomManager.getInstance()
+            .rooms.get(this.spaceId!)
+            ?.find((u) => u.userId === negoToUserId);
+          if (negoUser) {
+            negoUser.send({
+              type: "peer:nego:needed",
+              payload: { from: this.userId!, offer: negoOffer },
+            });
+          }
+          break;
+
+        case "peer:nego:done":
+          const negoDoneUser = parsedData.payload.toUserId;
+          const negoDoneAnswer = parsedData.payload.answer;
+          const negoDoneUser2 = RoomManager.getInstance()
+            .rooms.get(this.spaceId!)
+            ?.find((u) => u.userId === negoDoneUser);
+          if (negoDoneUser2) {
+            negoDoneUser2.send({
+              type: "peer:nego:final",
+              payload: { from: this.userId!, answer: negoDoneAnswer },
+            });
+          }
+          break;
+
+        case "ice-candidate":
+          const candidateToUserId = parsedData.payload.toUserId;
+          const candidate = parsedData.payload.candidate;
+          const candidateUser = RoomManager.getInstance()
+            .rooms.get(this.spaceId!)
+            ?.find((u) => u.userId === candidateToUserId);
+          if (candidateUser) {
+            candidateUser.send({
+              type: "ice-candidate",
+              payload: { candidate, from: this.userId! },
+            });
+          }
+>>>>>>> feature/webrtc-integration
           break;
       }
     });
@@ -373,9 +416,7 @@ export class User {
   public async kick() {
     this.send({
       type: "kicked",
-      payload: {
-        reason: "Repeated inappropriate chat messages.",
-      },
+      payload: { reason: "Repeated inappropriate chat messages." },
     });
 
     RoomManager.getInstance().broadcast(
@@ -392,11 +433,7 @@ export class User {
 
     await client.space.update({
       where: { id: this.spaceId! },
-      data: {
-        bannedUsers: {
-          push: this.userId!,
-        },
-      },
+      data: { bannedUsers: { push: this.userId! } },
     });
 
     RoomManager.getInstance().removeUser(this, this.spaceId!);
@@ -404,12 +441,28 @@ export class User {
   }
 
   destroy() {
+    const roomCalls = RoomManager.getInstance().ongoingCalls.get(this.spaceId!);
+    if (roomCalls && roomCalls.has(this.userId!)) {
+      const otherUserId = roomCalls.get(this.userId!)!;
+      const otherUser = RoomManager.getInstance()
+        .rooms.get(this.spaceId!)
+        ?.find((u) => u.userId === otherUserId);
+      if (otherUser) {
+        otherUser.send({
+          type: "call-end",
+          payload: { from: this.userId! },
+        });
+      }
+      RoomManager.getInstance().endCall(
+        this.spaceId!,
+        this.userId!,
+        otherUserId
+      );
+    }
     RoomManager.getInstance().broadcast(
       {
         type: "user-left",
-        payload: {
-          userId: this.userId,
-        },
+        payload: { userId: this.userId },
       },
       this,
       this.spaceId!
