@@ -3,6 +3,7 @@ import { useAvatar } from "../contexts/AvatarsContext";
 import { useAuth } from "../contexts/AuthContext";
 import ReactPlayer from "react-player";
 import peer from "../contexts/peerContext";
+import { useNavigate } from "react-router-dom";
 
 const GRID_SIZE = 50;
 const AVATAR_SIZE = 80;
@@ -23,11 +24,12 @@ export const Arena = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const navigate = useNavigate();
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [currentUser, setCurrentUser] = useState<any>({});
   const [users, setUsers] = useState(new Map<string, any>());
-  const [spaceId, setSpaceId] = useState(""); // Replace params with spaceId
+  const [spaceId, setSpaceId] = useState("");
   const [blockedUsers, setBlockedUsers] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredUser, setHoveredUser] = useState<string | null>(null);
@@ -121,6 +123,12 @@ export const Arena = () => {
     },
     [callStatus]
   );
+  const handleExitSpace = () => {
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+    navigate("/");
+  };
 
   const acceptCall = useCallback(async () => {
     if (!incomingOffer || !incomingCallFrom || !wsRef.current) return;
@@ -1112,8 +1120,7 @@ export const Arena = () => {
           <div className="flex justify-center gap-4 mb-4">
             <div className="bg-gray-800 rounded-lg p-3 shadow-lg">
               <p className="text-sm text-blue-400">Space ID</p>
-              <p className="font-mono">{spaceId}</p>{" "}
-              {/* Update to use spaceId */}
+              <p className="font-mono">{spaceId}</p>
             </div>
             <div className="bg-gray-800 rounded-lg p-3 shadow-lg">
               <p className="text-sm text-purple-400">Connected Players</p>
@@ -1122,6 +1129,12 @@ export const Arena = () => {
               </p>
             </div>
           </div>
+          <button
+            onClick={handleExitSpace}
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+          >
+            Exit Space
+          </button>
         </div>
 
         <div className="flex-1 flex gap-4">
@@ -1269,29 +1282,30 @@ export const Arena = () => {
                   </button>
                 </div>
               )}
-
-              {callStatus === "incoming" && incomingCallFrom && (
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 p-4 rounded-lg shadow-lg z-20">
-                  <p className="text-white mb-4">
-                    Incoming call from {incomingCallFrom}
-                  </p>
-                  <div className="flex gap-4">
-                    <button
-                      onClick={acceptCall}
-                      className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-                    >
-                      Accept
-                    </button>
-                    <button
-                      onClick={declineCall}
-                      className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                    >
-                      Decline
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
+            {callStatus === "incoming" && incomingCallFrom && (
+              <div className="fixed top-4 right-4 bg-gray-800 p-4 rounded-lg shadow-lg z-50">
+                <p className="text-white mb-4">
+                  Incoming call from {incomingCallFrom}
+                </p>
+
+                <div className="flex gap-4">
+                  <button
+                    onClick={acceptCall}
+                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                  >
+                    Accept
+                  </button>
+
+                  <button
+                    onClick={declineCall}
+                    className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                  >
+                    Decline
+                  </button>
+                </div>
+              </div>
+            )}
 
             {nearbyUsers.size > 0 && !activeChatUser && (
               <div className="absolute top-4 right-4 bg-gray-800 p-4 rounded-lg w-64 shadow-lg transition-all duration-300">

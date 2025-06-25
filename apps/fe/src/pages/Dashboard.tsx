@@ -18,6 +18,7 @@ export default function Dashboard() {
   const { token, logout } = useAuth();
   const navigate = useNavigate();
   console.log(spaces);
+
   useEffect(() => {
     const fetchSpaces = async () => {
       try {
@@ -57,7 +58,13 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-900 to-purple-800 py-12 px-4">
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-4 right-4 flex gap-4">
+        <button
+          onClick={() => navigate("/avatar-selection")}
+          className="px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg text-white font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all"
+        >
+          Change Avatar
+        </button>
         <button
           onClick={logout}
           className="px-6 py-2 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg text-white font-semibold hover:from-red-600 hover:to-orange-600 transition-all"

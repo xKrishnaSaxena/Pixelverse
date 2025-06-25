@@ -73,7 +73,6 @@ const bannedWords = [
   "tranny",
   "shemale",
   "hoe",
-  "hell",
   "damn",
   "godamn",
   "jesuschrist",
@@ -194,6 +193,7 @@ export class User {
 
         case "chat-message":
           const message = parsedData.payload.message;
+          console.log(message);
           if (parsedData.payload.isGlobal) {
             const containsProfanity = bannedWords.some((word) =>
               message.toLowerCase().includes(word.toLowerCase())
