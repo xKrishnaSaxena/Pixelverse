@@ -22,3 +22,8 @@ jobs:
           file: ./docker/Dockerfile.backend
           push: true
           tags: krishnasaxena/pixelverse-backend:${{ github.sha }}
+      - name: Deploy to the VM
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/ssh_key
+          chmod 600 ~/ssh_key
+          ssh -o StrictHostKeyChecking=no -i ~/ssh_key ubuntu@13.233.238.153 -t "sudo docker rm -f user_backend || true && sudo docker run --name user_backend -d -p 8080:8080 krishnasaxena/pixelverse-backend:${{ github.sha }}"
