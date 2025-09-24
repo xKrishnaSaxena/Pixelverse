@@ -1,9 +1,11 @@
 {
   "name": "websocket",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "dev": "tsc -b && node dist/index.js"
+    "build": "tsc -b",
+    "dev": "tsc -b && node dist/index.js",
+    "start": "node dist/index.js"
   },
   "keywords": [],
   "author": "",

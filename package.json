@@ -4,13 +4,14 @@
   "scripts": {
     "build": "turbo run build",
     "build:backend": "turbo run build --filter=http",
+    "build:websocket": "turbo run build --filter=websocket",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "db:generate": "cd packages/db && npx prisma generate && cd ../../",
     "start:backend": "cd apps/http && npm run start",
-    "start:websocket": "cd apps/websocket && npm run dev",
+    "start:websocket": "cd apps/websocket && npm run start",
     "start:frontend": "cd apps/fe && npm run dev"
   },
   "devDependencies": {
