@@ -4,7 +4,8 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    "./client": "./dist/index.js"
+    "./client": "./dist/index.js",
+    "./src/index": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc -b",
