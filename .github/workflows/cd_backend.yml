@@ -23,7 +23,11 @@ jobs:
           push: true
           tags: krishnasaxena/pixelverse-backend:${{ github.sha }}
       - name: Deploy to the VM
+        env:
+          PORT: 8080
+          MONGO_URL: ${{secrets.MONGO_URL}}
+          JWT_SECRET: ${{secrets.JWT_SECRET}}
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/ssh_key
           chmod 600 ~/ssh_key
-          ssh -o StrictHostKeyChecking=no -i ~/ssh_key ubuntu@13.232.200.114 -t "sudo docker rm -f user_backend || true && sudo docker run --name user_backend -d -p 8080:8080 krishnasaxena/pixelverse-backend:${{ github.sha }}"
+          ssh -o StrictHostKeyChecking=no -i ~/ssh_key ubuntu@13.232.200.114 -t "sudo docker rm -f user_backend || true && sudo docker run --name user_backend -d -p 8080:8080 -e PORT='${PORT}' -e MONGO_URL='${MONGO_URL}' -e JWT_SECRET='${JWT_SECRET}' krishnasaxena/pixelverse-backend:${{ github.sha }}"
