@@ -12,6 +12,7 @@ COPY ./apps/http ./apps/http/
 
 RUN npm install
 RUN npm run db:generate
+RUN npm run build:backend
 
 EXPOSE 8080
 
