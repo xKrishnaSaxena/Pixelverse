@@ -22,3 +22,12 @@ jobs:
           file: ./docker/Dockerfile.websocket
           push: true
           tags: krishnasaxena/pixelverse-websocket:${{ github.sha }}
+      - name: Deploy to the VM
+        env:
+          PORT: 8081
+          MONGO_URL: ${{secrets.MONGO_URL}}
+          JWT_SECRET: ${{secrets.JWT_SECRET}}
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/ssh_key
+          chmod 600 ~/ssh_key
+          ssh -o StrictHostKeyChecking=no -i ~/ssh_key ubuntu@13.232.200.114 -t "sudo docker rm -f user_websocket || true && sudo docker run --name user_websocket -d -p 8081:8081 -e PORT='${PORT}' -e MONGO_URL='${MONGO_URL}' -e JWT_SECRET='${JWT_SECRET}' krishnasaxena/pixelverse-websocket:${{ github.sha }}"

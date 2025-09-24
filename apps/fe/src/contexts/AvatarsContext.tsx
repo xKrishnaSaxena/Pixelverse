@@ -17,7 +17,7 @@ export const AvatarProvider = ({ children }: { children: ReactNode }) => {
       const usernamesString = usernames.join(",");
 
       const response = await fetch(
-        `http://localhost:8080/api/v1/user/metadata/bulk?userIds=${usernamesString}`
+        `http://ec2-13-235-243-65.ap-south-1.compute.amazonaws.com:8080/api/v1/user/metadata/bulk?userIds=${usernamesString}`
       );
       if (!response.ok) {
         throw new Error(

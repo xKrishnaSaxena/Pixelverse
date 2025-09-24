@@ -337,7 +337,9 @@ export const Arena = () => {
   useEffect(() => {
     if (isLoading || !token || !spaceId) return;
 
-    wsRef.current = new WebSocket("ws://localhost:8081");
+    wsRef.current = new WebSocket(
+      "ws://ec2-13-235-243-65.ap-south-1.compute.amazonaws.com:8081"
+    );
     wsRef.current.onopen = () => {
       wsRef.current!.send(
         JSON.stringify({ type: "join", payload: { spaceId, token } })

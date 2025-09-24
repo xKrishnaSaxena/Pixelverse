@@ -22,7 +22,7 @@ export default function AvatarSelection() {
     const fetchAvatars = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:8080/api/v1/avatars"
+          "http://ec2-13-235-243-65.ap-south-1.compute.amazonaws.com:8080/api/v1/avatars"
         );
         setAvatars(response.data.avatars);
       } catch (error) {
@@ -41,7 +41,7 @@ export default function AvatarSelection() {
     setIsSaving(true);
     try {
       await axios.post(
-        "http://localhost:8080/api/v1/user/metadata",
+        "http://ec2-13-235-243-65.ap-south-1.compute.amazonaws.com:8080/api/v1/user/metadata",
         { avatarId: selectedAvatar },
         { headers: { Authorization: `Bearer ${token}` } }
       );

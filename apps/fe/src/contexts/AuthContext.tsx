@@ -58,11 +58,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (username: string, password: string) => {
     try {
-      const response = await fetch("http://localhost:8080/api/v1/signin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+      const response = await fetch(
+        "http://ec2-13-235-243-65.ap-south-1.compute.amazonaws.com:8080/api/v1/signin",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        }
+      );
 
       const data = await response.json();
 
@@ -87,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signup = async (username: string, password: string) => {
     try {
       const signupResponse = await fetch(
-        "http://localhost:8080/api/v1/signup",
+        "http://ec2-13-235-243-65.ap-south-1.compute.amazonaws.com:8080/api/v1/signup",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

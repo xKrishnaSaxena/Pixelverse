@@ -25,7 +25,7 @@ export default function ManageSpace() {
     const fetchSpaceDetails = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8080/api/v1/space/${spaceId}`,
+          `http://ec2-13-235-243-65.ap-south-1.compute.amazonaws.com:8080/api/v1/space/${spaceId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -44,7 +44,7 @@ export default function ManageSpace() {
   const handleUnban = async (userId: string) => {
     try {
       await axios.post(
-        `http://localhost:8080/api/v1/space/${spaceId}/unban`,
+        `http://ec2-13-235-243-65.ap-south-1.compute.amazonaws.com:8080/api/v1/space/${spaceId}/unban`,
         { userId },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -52,7 +52,7 @@ export default function ManageSpace() {
       );
 
       const response = await axios.get(
-        `http://localhost:8080/api/v1/space/${spaceId}`,
+        `http://ec2-13-235-243-65.ap-south-1.compute.amazonaws.com:8080/api/v1/space/${spaceId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

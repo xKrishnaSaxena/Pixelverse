@@ -22,3 +22,10 @@ jobs:
           file: ./docker/Dockerfile.frontend
           push: true
           tags: krishnasaxena/pixelverse-frontend:${{ github.sha }}
+      - name: Deploy to the VM
+        env:
+          PORT: 3000
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/ssh_key
+          chmod 600 ~/ssh_key
+          ssh -o StrictHostKeyChecking=no -i ~/ssh_key ubuntu@13.232.200.114 -t "sudo docker rm -f user_frontend || true && sudo docker run --name user_frontend -d -p 3000:3000 -e PORT='${PORT}' -e MONGO_URL='${MONGO_URL}' -e JWT_SECRET='${JWT_SECRET}' krishnasaxena/pixelverse-frontend:${{ github.sha }}"

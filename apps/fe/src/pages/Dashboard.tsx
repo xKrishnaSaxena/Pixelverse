@@ -23,7 +23,7 @@ export default function Dashboard() {
     const fetchSpaces = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:8080/api/v1/space/all",
+          "http://ec2-13-235-243-65.ap-south-1.compute.amazonaws.com:8080/api/v1/space/all",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
