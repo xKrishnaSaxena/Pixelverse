@@ -28,6 +28,8 @@ export const Arena = () => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [currentUser, setCurrentUser] = useState<any>({});
+  const isRemoteDescriptionSet = useRef(false);
+  const iceCandidatesQueue = useRef<RTCIceCandidateInit[]>([]);
   const [users, setUsers] = useState(new Map<string, any>());
   const [spaceId, setSpaceId] = useState("");
   const [blockedUsers, setBlockedUsers] = useState<Set<string>>(new Set());
@@ -100,6 +102,8 @@ export const Arena = () => {
   const handleCallUser = useCallback(
     async (recipient: string) => {
       if (callStatus !== "idle" || !wsRef.current) return;
+      isRemoteDescriptionSet.current = false;
+      iceCandidatesQueue.current = [];
       setCallStatus("calling");
       setRemoteUserId(recipient);
 
@@ -132,18 +136,30 @@ export const Arena = () => {
 
   const acceptCall = useCallback(async () => {
     if (!incomingOffer || !incomingCallFrom || !wsRef.current) return;
+
+    isRemoteDescriptionSet.current = false;
+    iceCandidatesQueue.current = [];
+
     setCallStatus("in-call");
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
       video: true,
     });
     setLocalStream(stream);
+
     if (peer.peer) {
       for (const track of stream.getTracks()) {
         peer.peer.addTrack(track, stream);
       }
     }
+
     const answer = await peer.getAnswer(incomingOffer);
+    isRemoteDescriptionSet.current = true;
+    iceCandidatesQueue.current.forEach((candidate) => {
+      peer.peer?.addIceCandidate(candidate);
+    });
+    iceCandidatesQueue.current = [];
+
     wsRef.current.send(
       JSON.stringify({
         type: "call-accepted",
@@ -577,6 +593,11 @@ export const Arena = () => {
 
         case "call-accepted":
           handleCallAccepted(message.payload);
+          isRemoteDescriptionSet.current = true;
+          iceCandidatesQueue.current.forEach((candidate) =>
+            peer.peer?.addIceCandidate(candidate)
+          );
+          iceCandidatesQueue.current = [];
           break;
 
         case "call-declined":
@@ -634,8 +655,13 @@ export const Arena = () => {
           break;
 
         case "ice-candidate":
+          const candidate = message.payload.candidate;
           if (peer.peer) {
-            peer.peer.addIceCandidate(message.payload.candidate);
+            if (peer.peer.remoteDescription) {
+              peer.peer.addIceCandidate(candidate);
+            } else {
+              iceCandidatesQueue.current.push(candidate);
+            }
           }
           break;
 
@@ -1104,6 +1130,32 @@ export const Arena = () => {
       !blockedUsers.has(msg.userId)
   );
 
+  const VideoPlayer = ({
+    stream,
+    muted = false,
+  }: {
+    stream: MediaStream | null;
+    muted?: boolean;
+  }) => {
+    const videoRef = useRef<HTMLVideoElement>(null);
+
+    useEffect(() => {
+      if (videoRef.current && stream) {
+        videoRef.current.srcObject = stream;
+      }
+    }, [stream]);
+
+    return (
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline // Critical for mobile/Safari
+        muted={muted} // Mute local video to prevent feedback
+        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+      />
+    );
+  };
+
   return (
     <div
       ref={containerRef}
@@ -1248,13 +1300,7 @@ export const Arena = () => {
                       <p className="text-sm text-gray-400 mb-1">You</p>
                       <div className="w-64 h-48 bg-black rounded overflow-hidden">
                         {localStream && (
-                          <ReactPlayer
-                            playing
-                            muted
-                            height="100%"
-                            width="100%"
-                            url={localStream}
-                          />
+                          <VideoPlayer stream={localStream} muted={true} />
                         )}
                       </div>
                     </div>
@@ -1264,12 +1310,7 @@ export const Arena = () => {
                       </p>
                       <div className="w-64 h-48 bg-black rounded overflow-hidden">
                         {remoteStream && (
-                          <ReactPlayer
-                            playing
-                            height="100%"
-                            width="100%"
-                            url={remoteStream}
-                          />
+                          <VideoPlayer stream={remoteStream} muted={false} />
                         )}
                       </div>
                     </div>

@@ -1,8 +1,10 @@
 class PeerService {
   peer: RTCPeerConnection | null = null;
 
-  constructor() {
-    if (!this.peer) {
+  constructor() {}
+
+  private ensurePeer() {
+    if (!this.peer || this.peer.connectionState === "closed") {
       this.peer = new RTCPeerConnection({
         iceServers: [
           {
@@ -11,32 +13,35 @@ class PeerService {
               "stun:global.stun.twilio.com:3478",
             ],
           },
+          {
+            urls: "relay1.expressturn.com:3480",
+            username: "000000002079099262",
+            credential: "mKSsQhe7U3r1DQZQU9kJ1Mv1Xko=",
+          },
         ],
       });
     }
+    return this.peer;
   }
 
   async getAnswer(offer: any) {
-    if (this.peer) {
-      await this.peer.setRemoteDescription(offer);
-      const ans = await this.peer.createAnswer();
-      await this.peer.setLocalDescription(new RTCSessionDescription(ans));
-      return ans;
-    }
+    const peer = this.ensurePeer();
+    await peer.setRemoteDescription(offer);
+    const ans = await peer.createAnswer();
+    await peer.setLocalDescription(new RTCSessionDescription(ans));
+    return ans;
   }
 
   async setRemoteDescription(ans: any) {
-    if (this.peer) {
-      await this.peer.setRemoteDescription(new RTCSessionDescription(ans));
-    }
+    const peer = this.ensurePeer(); // Use helper
+    await peer.setRemoteDescription(new RTCSessionDescription(ans));
   }
 
   async getOffer() {
-    if (this.peer) {
-      const offer = await this.peer.createOffer();
-      await this.peer.setLocalDescription(new RTCSessionDescription(offer));
-      return offer;
-    }
+    const peer = this.ensurePeer(); // Use helper
+    const offer = await peer.createOffer();
+    await peer.setLocalDescription(new RTCSessionDescription(offer));
+    return offer;
   }
 }
 
