@@ -8,15 +8,16 @@ COPY ./package.json ./package.json
 COPY ./turbo.json ./turbo.json
 COPY ./apps/http ./apps/http/
 
+# --- THE FIX: Force delete any conflicting dist folders ---
+RUN rm -rf packages/db/dist
+RUN rm -rf apps/http/dist
+# --------------------------------------------------------
+
 RUN npm install
 
-# Generate Prisma Client
 RUN npm run db:generate
 
-# CRITICAL CHANGE: Build the DB package explicitly first
-RUN cd packages/db && npm run build && cd ../..
-
-# Then build the backend
+# Let Turbo handle the build order (Removed the manual db build step)
 RUN npm run build:backend
 
 EXPOSE 8080
