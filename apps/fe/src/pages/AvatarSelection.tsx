@@ -22,7 +22,7 @@ export default function AvatarSelection() {
     const fetchAvatars = async () => {
       try {
         const response = await axios.get(
-          "http://165.232.191.102:8080/api/v1/avatars"
+          "https://api-pixelverse.stelliform.xyz/api/v1/avatars"
         );
         setAvatars(response.data.avatars);
       } catch (error) {
@@ -41,7 +41,7 @@ export default function AvatarSelection() {
     setIsSaving(true);
     try {
       await axios.post(
-        "http://165.232.191.102:8080/api/v1/user/metadata",
+        "https://api-pixelverse.stelliform.xyz/api/v1/user/metadata",
         { avatarId: selectedAvatar },
         { headers: { Authorization: `Bearer ${token}` } }
       );

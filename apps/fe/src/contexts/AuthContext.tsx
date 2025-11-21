@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (username: string, password: string) => {
     try {
       const response = await fetch(
-        "http://165.232.191.102:8080/api/v1/signin",
+        "https://api-pixelverse.stelliform.xyz/api/v1/signin",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signup = async (username: string, password: string) => {
     try {
       const signupResponse = await fetch(
-        "http://165.232.191.102:8080/api/v1/signup",
+        "https://api-pixelverse.stelliform.xyz/api/v1/signup",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

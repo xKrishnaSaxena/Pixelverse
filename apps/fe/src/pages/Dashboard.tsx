@@ -23,7 +23,7 @@ export default function Dashboard() {
     const fetchSpaces = async () => {
       try {
         const response = await axios.get(
-          "http://165.232.191.102:8080/api/v1/space/all",
+          "https://api-pixelverse.stelliform.xyz/api/v1/space/all",
           {
             headers: { Authorization: `Bearer ${token}` },
           }

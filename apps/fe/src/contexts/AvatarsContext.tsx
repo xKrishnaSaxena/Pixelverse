@@ -17,7 +17,7 @@ export const AvatarProvider = ({ children }: { children: ReactNode }) => {
       const usernamesString = usernames.join(",");
 
       const response = await fetch(
-        `http://165.232.191.102:8080/api/v1/user/metadata/bulk?userIds=${usernamesString}`
+        `https://api-pixelverse.stelliform.xyz/api/v1/user/metadata/bulk?userIds=${usernamesString}`
       );
       if (!response.ok) {
         throw new Error(

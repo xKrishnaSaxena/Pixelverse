@@ -337,7 +337,7 @@ export const Arena = () => {
   useEffect(() => {
     if (isLoading || !token || !spaceId) return;
 
-    wsRef.current = new WebSocket("ws://165.232.191.102:8081");
+    wsRef.current = new WebSocket("wss://ws-pixelverse.stelliform.xyz");
     wsRef.current.onopen = () => {
       wsRef.current!.send(
         JSON.stringify({ type: "join", payload: { spaceId, token } })
