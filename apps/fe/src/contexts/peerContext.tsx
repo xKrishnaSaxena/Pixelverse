@@ -13,11 +13,6 @@ class PeerService {
               "stun:global.stun.twilio.com:3478",
             ],
           },
-          {
-            urls: "relay1.expressturn.com:3480",
-            username: "000000002079099262",
-            credential: "mKSsQhe7U3r1DQZQU9kJ1Mv1Xko=",
-          },
         ],
       });
     }
