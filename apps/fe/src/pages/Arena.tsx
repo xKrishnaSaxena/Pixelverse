@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAvatar } from "../contexts/AvatarsContext";
 import { useAuth } from "../contexts/AuthContext";
+import ReactPlayer from "react-player";
 import peer from "../contexts/peerContext";
 import { useNavigate } from "react-router-dom";
 
@@ -27,8 +28,6 @@ export const Arena = () => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [currentUser, setCurrentUser] = useState<any>({});
-  const isRemoteDescriptionSet = useRef(false);
-  const iceCandidatesQueue = useRef<RTCIceCandidateInit[]>([]);
   const [users, setUsers] = useState(new Map<string, any>());
   const [spaceId, setSpaceId] = useState("");
   const [blockedUsers, setBlockedUsers] = useState<Set<string>>(new Set());
@@ -104,29 +103,16 @@ export const Arena = () => {
       setCallStatus("calling");
       setRemoteUserId(recipient);
 
-      // Reinitialize peer connection for new call
-      peer.initializePeer();
-
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: true,
       });
       setLocalStream(stream);
-
       if (peer.peer) {
-        // Add all tracks to peer connection
-        stream.getTracks().forEach((track) => {
-          peer.peer!.addTrack(track, stream);
-        });
-
-        // Set up remote track handling
-        peer.peer.ontrack = (event) => {
-          if (event.streams && event.streams[0]) {
-            setRemoteStream(event.streams[0]);
-          }
-        };
+        for (const track of stream.getTracks()) {
+          peer.peer.addTrack(track, stream);
+        }
       }
-
       const offer = await peer.getOffer();
       wsRef.current.send(
         JSON.stringify({
@@ -147,30 +133,16 @@ export const Arena = () => {
   const acceptCall = useCallback(async () => {
     if (!incomingOffer || !incomingCallFrom || !wsRef.current) return;
     setCallStatus("in-call");
-
-    // Reinitialize peer connection for new call
-    peer.initializePeer();
-
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
       video: true,
     });
     setLocalStream(stream);
-
     if (peer.peer) {
-      // Add all tracks to peer connection
-      stream.getTracks().forEach((track) => {
-        peer.peer!.addTrack(track, stream);
-      });
-
-      // Set up remote track handling
-      peer.peer.ontrack = (event) => {
-        if (event.streams && event.streams[0]) {
-          setRemoteStream(event.streams[0]);
-        }
-      };
+      for (const track of stream.getTracks()) {
+        peer.peer.addTrack(track, stream);
+      }
     }
-
     const answer = await peer.getAnswer(incomingOffer);
     wsRef.current.send(
       JSON.stringify({
@@ -199,35 +171,10 @@ export const Arena = () => {
   const handleCallAccepted = useCallback(
     async ({ answer }: { answer: any }) => {
       if (!peer.peer) return;
-
       await peer.setRemoteDescription(answer);
       setCallStatus("in-call");
-
-      if (!remoteStream) {
-        peer.peer.addEventListener("track", (ev) => {
-          console.log("Track event received:", {
-            trackKind: ev.track.kind,
-            trackReadyState: ev.track.readyState,
-            streamsCount: ev.streams.length,
-            stream: ev.streams[0],
-          });
-
-          if (ev.streams && ev.streams[0]) {
-            const newStream = ev.streams[0];
-            console.log(
-              "Remote stream tracks:",
-              newStream.getTracks().map((t) => ({
-                kind: t.kind,
-                readyState: t.readyState,
-                enabled: t.enabled,
-              }))
-            );
-            setRemoteStream(newStream);
-          }
-        });
-      }
     },
-    [remoteStream]
+    []
   );
 
   const handleEndCall = useCallback(() => {
@@ -294,15 +241,10 @@ export const Arena = () => {
 
   useEffect(() => {
     if (!peer.peer) return;
-
-    const handleTrack = (ev: RTCTrackEvent) => {
-      console.log("Track received:", ev.track.kind, ev.streams);
-      if (ev.streams && ev.streams[0]) {
-        setRemoteStream(ev.streams[0]);
-      }
-    };
-
-    const handleIceCandidate = (event: RTCPeerConnectionIceEvent) => {
+    peer.peer.addEventListener("track", (ev) => {
+      setRemoteStream(ev.streams[0]);
+    });
+    peer.peer.addEventListener("icecandidate", (event) => {
       if (event.candidate && wsRef.current && remoteUserId) {
         wsRef.current.send(
           JSON.stringify({
@@ -311,16 +253,10 @@ export const Arena = () => {
           })
         );
       }
-    };
-
-    peer.peer.addEventListener("track", handleTrack);
-    peer.peer.addEventListener("icecandidate", handleIceCandidate);
+    });
     peer.peer.addEventListener("negotiationneeded", handleNegoNeeded);
-
     return () => {
       if (!peer.peer) return;
-      peer.peer.removeEventListener("track", handleTrack);
-      peer.peer.removeEventListener("icecandidate", handleIceCandidate);
       peer.peer.removeEventListener("negotiationneeded", handleNegoNeeded);
     };
   }, [handleNegoNeeded, remoteUserId]);
@@ -641,11 +577,6 @@ export const Arena = () => {
 
         case "call-accepted":
           handleCallAccepted(message.payload);
-          isRemoteDescriptionSet.current = true;
-          iceCandidatesQueue.current.forEach((candidate) =>
-            peer.peer?.addIceCandidate(candidate)
-          );
-          iceCandidatesQueue.current = [];
           break;
 
         case "call-declined":
@@ -703,13 +634,8 @@ export const Arena = () => {
           break;
 
         case "ice-candidate":
-          const candidate = message.payload.candidate;
           if (peer.peer) {
-            if (peer.peer.remoteDescription) {
-              peer.peer.addIceCandidate(candidate);
-            } else {
-              iceCandidatesQueue.current.push(candidate);
-            }
+            peer.peer.addIceCandidate(message.payload.candidate);
           }
           break;
 
@@ -1178,32 +1104,6 @@ export const Arena = () => {
       !blockedUsers.has(msg.userId)
   );
 
-  const VideoPlayer = ({
-    stream,
-    muted = false,
-  }: {
-    stream: MediaStream | null;
-    muted?: boolean;
-  }) => {
-    const videoRef = useRef<HTMLVideoElement>(null);
-
-    useEffect(() => {
-      if (videoRef.current && stream) {
-        videoRef.current.srcObject = stream;
-      }
-    }, [stream]);
-
-    return (
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline // Critical for mobile/Safari
-        muted={muted} // Mute local video to prevent feedback
-        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-      />
-    );
-  };
-
   return (
     <div
       ref={containerRef}
@@ -1348,7 +1248,13 @@ export const Arena = () => {
                       <p className="text-sm text-gray-400 mb-1">You</p>
                       <div className="w-64 h-48 bg-black rounded overflow-hidden">
                         {localStream && (
-                          <VideoPlayer stream={localStream} muted={true} />
+                          <ReactPlayer
+                            playing
+                            muted
+                            height="100%"
+                            width="100%"
+                            url={localStream}
+                          />
                         )}
                       </div>
                     </div>
@@ -1358,7 +1264,12 @@ export const Arena = () => {
                       </p>
                       <div className="w-64 h-48 bg-black rounded overflow-hidden">
                         {remoteStream && (
-                          <VideoPlayer stream={remoteStream} muted={false} />
+                          <ReactPlayer
+                            playing
+                            height="100%"
+                            width="100%"
+                            url={remoteStream}
+                          />
                         )}
                       </div>
                     </div>
