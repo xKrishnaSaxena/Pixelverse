@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (username: string, password: string) => {
     try {
       const response = await fetch(
-        "http://ec2-13-235-243-65.ap-south-1.compute.amazonaws.com:8080/api/v1/signin",
+        "http://165.232.191.102:8080/api/v1/signin",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signup = async (username: string, password: string) => {
     try {
       const signupResponse = await fetch(
-        "http://ec2-13-235-243-65.ap-south-1.compute.amazonaws.com:8080/api/v1/signup",
+        "http://165.232.191.102:8080/api/v1/signup",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

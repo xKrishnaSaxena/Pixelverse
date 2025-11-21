@@ -30,4 +30,4 @@ jobs:
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/ssh_key
           chmod 600 ~/ssh_key
-          ssh -o StrictHostKeyChecking=no -i ~/ssh_key ubuntu@13.235.243.65 -t "sudo docker pull krishnasaxena/pixelverse-backend:${{ github.sha }} && sudo docker rm -f user_backend || true && sudo docker run --name user_backend -d -p 8080:8080 -e PORT='${PORT}' -e MONGO_URL='${MONGO_URL}' -e JWT_SECRET='${JWT_SECRET}' krishnasaxena/pixelverse-backend:${{ github.sha }} && sudo docker image prune -a -f"
+          ssh -o StrictHostKeyChecking=no -i ~/ssh_key ubuntu@${{ secrets.DO_HOST }} -t "sudo docker pull krishnasaxena/pixelverse-backend:${{ github.sha }} && sudo docker rm -f user_backend || true && sudo docker run --name user_backend -d -p 8080:8080 -e PORT='${PORT}' -e MONGO_URL='${MONGO_URL}' -e JWT_SECRET='${JWT_SECRET}' krishnasaxena/pixelverse-backend:${{ github.sha }} && sudo docker image prune -a -f"

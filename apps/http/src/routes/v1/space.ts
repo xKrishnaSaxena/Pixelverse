@@ -53,7 +53,7 @@ spaceRouter.post("/", userMiddleware, async (req: Request, res: Response) => {
       },
     });
     await client.spaceElement.createMany({
-      data: map.elements.map((element) => ({
+      data: map.elements.map((element: any) => ({
         spaceId: space.id,
         elementId: element.id,
         x: element.x!,
@@ -101,7 +101,7 @@ spaceRouter.get("/all", userMiddleware, async (req: Request, res: Response) => {
     },
   });
   res.json({
-    spaces: spaces.map((space) => ({
+    spaces: spaces.map((space: any) => ({
       id: space.id,
       name: space.name,
       dimensions: `${space.width}x${space.height}`,
@@ -219,7 +219,7 @@ spaceRouter.get(
       dimensions: `${space.width}x${space.height}`,
       name: space.name,
       thumbnail: space.thumbnail,
-      elements: space.elements.map((e) => ({
+      elements: space.elements.map((e: any) => ({
         id: e.id,
         x: e.x,
         y: e.y,
@@ -258,7 +258,7 @@ spaceRouter.post(
       return;
     }
     const updatedBannedUsers = space.bannedUsers.filter(
-      (username) => username !== userIdToUnban
+      (username: any) => username !== userIdToUnban
     );
     await client.space.update({
       where: { id: spaceId },
