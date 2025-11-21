@@ -1,7 +1,25 @@
 class PeerService {
   peer: RTCPeerConnection | null = null;
 
-  constructor() {}
+  constructor() {
+    this.initializePeer();
+  }
+  initializePeer() {
+    if (this.peer) {
+      this.peer.close();
+    }
+
+    this.peer = new RTCPeerConnection({
+      iceServers: [
+        {
+          urls: [
+            "stun:stun.l.google.com:19302",
+            "stun:global.stun.twilio.com:3478",
+          ],
+        },
+      ],
+    });
+  }
 
   private ensurePeer() {
     if (!this.peer || this.peer.connectionState === "closed") {
@@ -28,12 +46,12 @@ class PeerService {
   }
 
   async setRemoteDescription(ans: any) {
-    const peer = this.ensurePeer(); // Use helper
+    const peer = this.ensurePeer();
     await peer.setRemoteDescription(new RTCSessionDescription(ans));
   }
 
   async getOffer() {
-    const peer = this.ensurePeer(); // Use helper
+    const peer = this.ensurePeer();
     const offer = await peer.createOffer();
     await peer.setLocalDescription(new RTCSessionDescription(offer));
     return offer;

@@ -101,21 +101,32 @@ export const Arena = () => {
   const handleCallUser = useCallback(
     async (recipient: string) => {
       if (callStatus !== "idle" || !wsRef.current) return;
-      isRemoteDescriptionSet.current = false;
-      iceCandidatesQueue.current = [];
       setCallStatus("calling");
       setRemoteUserId(recipient);
+
+      // Reinitialize peer connection for new call
+      peer.initializePeer();
 
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: true,
       });
       setLocalStream(stream);
+
       if (peer.peer) {
-        for (const track of stream.getTracks()) {
-          peer.peer.addTrack(track, stream);
-        }
+        // Add all tracks to peer connection
+        stream.getTracks().forEach((track) => {
+          peer.peer!.addTrack(track, stream);
+        });
+
+        // Set up remote track handling
+        peer.peer.ontrack = (event) => {
+          if (event.streams && event.streams[0]) {
+            setRemoteStream(event.streams[0]);
+          }
+        };
       }
+
       const offer = await peer.getOffer();
       wsRef.current.send(
         JSON.stringify({
@@ -135,11 +146,11 @@ export const Arena = () => {
 
   const acceptCall = useCallback(async () => {
     if (!incomingOffer || !incomingCallFrom || !wsRef.current) return;
-
-    isRemoteDescriptionSet.current = false;
-    iceCandidatesQueue.current = [];
-
     setCallStatus("in-call");
+
+    // Reinitialize peer connection for new call
+    peer.initializePeer();
+
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
       video: true,
@@ -147,18 +158,20 @@ export const Arena = () => {
     setLocalStream(stream);
 
     if (peer.peer) {
-      for (const track of stream.getTracks()) {
-        peer.peer.addTrack(track, stream);
-      }
+      // Add all tracks to peer connection
+      stream.getTracks().forEach((track) => {
+        peer.peer!.addTrack(track, stream);
+      });
+
+      // Set up remote track handling
+      peer.peer.ontrack = (event) => {
+        if (event.streams && event.streams[0]) {
+          setRemoteStream(event.streams[0]);
+        }
+      };
     }
 
     const answer = await peer.getAnswer(incomingOffer);
-    isRemoteDescriptionSet.current = true;
-    iceCandidatesQueue.current.forEach((candidate) => {
-      peer.peer?.addIceCandidate(candidate);
-    });
-    iceCandidatesQueue.current = [];
-
     wsRef.current.send(
       JSON.stringify({
         type: "call-accepted",
@@ -186,10 +199,35 @@ export const Arena = () => {
   const handleCallAccepted = useCallback(
     async ({ answer }: { answer: any }) => {
       if (!peer.peer) return;
+
       await peer.setRemoteDescription(answer);
       setCallStatus("in-call");
+
+      if (!remoteStream) {
+        peer.peer.addEventListener("track", (ev) => {
+          console.log("Track event received:", {
+            trackKind: ev.track.kind,
+            trackReadyState: ev.track.readyState,
+            streamsCount: ev.streams.length,
+            stream: ev.streams[0],
+          });
+
+          if (ev.streams && ev.streams[0]) {
+            const newStream = ev.streams[0];
+            console.log(
+              "Remote stream tracks:",
+              newStream.getTracks().map((t) => ({
+                kind: t.kind,
+                readyState: t.readyState,
+                enabled: t.enabled,
+              }))
+            );
+            setRemoteStream(newStream);
+          }
+        });
+      }
     },
-    []
+    [remoteStream]
   );
 
   const handleEndCall = useCallback(() => {
@@ -256,10 +294,15 @@ export const Arena = () => {
 
   useEffect(() => {
     if (!peer.peer) return;
-    peer.peer.addEventListener("track", (ev) => {
-      setRemoteStream(ev.streams[0]);
-    });
-    peer.peer.addEventListener("icecandidate", (event) => {
+
+    const handleTrack = (ev: RTCTrackEvent) => {
+      console.log("Track received:", ev.track.kind, ev.streams);
+      if (ev.streams && ev.streams[0]) {
+        setRemoteStream(ev.streams[0]);
+      }
+    };
+
+    const handleIceCandidate = (event: RTCPeerConnectionIceEvent) => {
       if (event.candidate && wsRef.current && remoteUserId) {
         wsRef.current.send(
           JSON.stringify({
@@ -268,10 +311,16 @@ export const Arena = () => {
           })
         );
       }
-    });
+    };
+
+    peer.peer.addEventListener("track", handleTrack);
+    peer.peer.addEventListener("icecandidate", handleIceCandidate);
     peer.peer.addEventListener("negotiationneeded", handleNegoNeeded);
+
     return () => {
       if (!peer.peer) return;
+      peer.peer.removeEventListener("track", handleTrack);
+      peer.peer.removeEventListener("icecandidate", handleIceCandidate);
       peer.peer.removeEventListener("negotiationneeded", handleNegoNeeded);
     };
   }, [handleNegoNeeded, remoteUserId]);
