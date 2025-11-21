@@ -1,23 +1,30 @@
-FROM node:18-alpine
+FROM node:22-alpine
 
 WORKDIR /usr/src/app
 
+# Copy everything
 COPY ./packages ./packages/
 COPY ./package-lock.json ./package-lock.json
 COPY ./package.json ./package.json
 COPY ./turbo.json ./turbo.json
 COPY ./apps/http ./apps/http/
 
-# --- THE FIX: Force delete any conflicting dist folders ---
-RUN rm -rf packages/db/dist
-RUN rm -rf apps/http/dist
-# --------------------------------------------------------
+# --- THE CLEANUP STEP ---
+# 1. Delete all 'node_modules' copied from your laptop (prevents OS conflicts)
+RUN find . -name "node_modules" -type d -prune -exec rm -rf '{}' +
+# 2. Delete all 'dist' folders (prevents the TS6305 error)
+RUN find . -name "dist" -type d -prune -exec rm -rf '{}' +
+# 3. Delete TypeScript cache info
+RUN find . -name "*.tsbuildinfo" -type f -delete
+# ------------------------
 
+# Now install fresh dependencies inside the container
 RUN npm install
 
+# Generate Prisma client
 RUN npm run db:generate
 
-# Let Turbo handle the build order (Removed the manual db build step)
+# Build the backend
 RUN npm run build:backend
 
 EXPOSE 8080
