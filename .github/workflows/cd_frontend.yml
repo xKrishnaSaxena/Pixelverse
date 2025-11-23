@@ -25,6 +25,7 @@ jobs:
       - name: Deploy to the VM
         env:
           PORT: 3000
+          API_KEY: ${{secrets.TURN_API_KEY}}
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/ssh_key
           chmod 600 ~/ssh_key
