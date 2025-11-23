@@ -1,6 +1,7 @@
 class PeerService {
   private peer: RTCPeerConnection | null = null;
-
+  private pendingCandidates: RTCIceCandidate[] = [];
+  private isRemoteDescriptionSet: boolean = false;
   constructor() {
     this.createPeer();
   }
@@ -9,12 +10,13 @@ class PeerService {
     this.peer = new RTCPeerConnection({
       iceServers: [
         {
-          urls: "turn:global.relay.metered.ca:80",
-          username: "ccc312127ec1bfa1e5ca89bf",
-          credential: "v+gRS02yJ7JZB0Za",
+          urls: "stun:stun.l.google.com:19302",
         },
         {
-          urls: "turn:global.relay.metered.ca:80?transport=tcp",
+          urls: "stun:stun1.l.google.com:19302",
+        },
+        {
+          urls: "turn:global.relay.metered.ca:80",
           username: "ccc312127ec1bfa1e5ca89bf",
           credential: "v+gRS02yJ7JZB0Za",
         },
@@ -23,13 +25,24 @@ class PeerService {
           username: "ccc312127ec1bfa1e5ca89bf",
           credential: "v+gRS02yJ7JZB0Za",
         },
-        {
-          urls: "turns:global.relay.metered.ca:443?transport=tcp",
-          username: "ccc312127ec1bfa1e5ca89bf",
-          credential: "v+gRS02yJ7JZB0Za",
-        },
       ],
     });
+
+    this.peer.onconnectionstatechange = () => {
+      console.log("Connection state:", this.peer?.connectionState);
+      if (this.peer?.connectionState === "failed") {
+        console.error("Connection failed, attempting restart...");
+        this.peer?.restartIce();
+      }
+    };
+
+    this.peer.oniceconnectionstatechange = () => {
+      console.log("ICE connection state:", this.peer?.iceConnectionState);
+    };
+
+    this.peer.onicegatheringstatechange = () => {
+      console.log("ICE gathering state:", this.peer?.iceGatheringState);
+    };
 
     this.peer.ontrack = null;
     this.peer.onicecandidate = null;
@@ -40,6 +53,9 @@ class PeerService {
     if (this.peer) {
       this.peer.close();
     }
+    this.pendingCandidates = [];
+    this.isRemoteDescriptionSet = false;
+
     this.createPeer();
   }
 
@@ -57,6 +73,7 @@ class PeerService {
   async getAnswer(offer: RTCSessionDescriptionInit) {
     if (!this.peer) throw new Error("Peer not initialized");
     await this.peer.setRemoteDescription(offer);
+    this.isRemoteDescriptionSet = true;
     const answer = await this.peer.createAnswer();
     await this.peer.setLocalDescription(answer);
     return answer;
@@ -65,6 +82,31 @@ class PeerService {
   async setRemoteAnswer(answer: RTCSessionDescriptionInit) {
     if (!this.peer) return;
     await this.peer.setRemoteDescription(answer);
+    this.isRemoteDescriptionSet = true;
+    for (const candidate of this.pendingCandidates) {
+      try {
+        await this.peer.addIceCandidate(candidate);
+        console.log("Added buffered ICE candidate");
+      } catch (err) {
+        console.warn("Failed to add buffered candidate:", err);
+      }
+    }
+    this.pendingCandidates = [];
+  }
+  async addIceCandidate(candidate: RTCIceCandidateInit) {
+    if (!this.peer) return;
+    if (!this.isRemoteDescriptionSet) {
+      console.log("Buffering ICE candidate");
+      this.pendingCandidates.push(new RTCIceCandidate(candidate));
+      return;
+    }
+
+    try {
+      await this.peer.addIceCandidate(new RTCIceCandidate(candidate));
+      console.log("Added ICE candidate successfully");
+    } catch (err) {
+      console.error("Error adding ICE candidate:", err);
+    }
   }
 }
 

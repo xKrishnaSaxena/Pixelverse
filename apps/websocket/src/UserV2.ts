@@ -193,7 +193,6 @@ export class User {
 
         case "chat-message":
           const message = parsedData.payload.message;
-          console.log(message);
           if (parsedData.payload.isGlobal) {
             const containsProfanity = bannedWords.some((word) =>
               message.toLowerCase().includes(word.toLowerCase())
@@ -315,6 +314,32 @@ export class User {
           }
           break;
 
+        case "call-declined":
+          const declinedToUserId = parsedData.payload.toUserId;
+          const declinedUser = RoomManager.getInstance()
+            .rooms.get(this.spaceId!)
+            ?.find((u) => u.userId === declinedToUserId);
+          if (declinedUser) {
+            declinedUser.send({
+              type: "call-declined",
+              payload: { from: this.userId! },
+            });
+          }
+          break;
+
+        case "call-cancelled":
+          const cancelledToUserId = parsedData.payload.toUserId;
+          const cancelledUser = RoomManager.getInstance()
+            .rooms.get(this.spaceId!)
+            ?.find((u) => u.userId === cancelledToUserId);
+          if (cancelledUser) {
+            cancelledUser.send({
+              type: "call-cancelled",
+              payload: { from: this.userId! },
+            });
+          }
+          break;
+
         case "call-end":
           const endToUserId = parsedData.payload.toUserId;
           const endUser = RoomManager.getInstance()
@@ -330,34 +355,6 @@ export class User {
               this.userId!,
               endToUserId
             );
-          }
-          break;
-
-        case "peer:negotiation-needed":
-          const negoToUserId = parsedData.payload.toUserId;
-          const negoOffer = parsedData.payload.offer;
-          const negoUser = RoomManager.getInstance()
-            .rooms.get(this.spaceId!)
-            ?.find((u) => u.userId === negoToUserId);
-          if (negoUser) {
-            negoUser.send({
-              type: "peer:nego:needed",
-              payload: { from: this.userId!, offer: negoOffer },
-            });
-          }
-          break;
-
-        case "peer:nego:done":
-          const negoDoneUser = parsedData.payload.toUserId;
-          const negoDoneAnswer = parsedData.payload.answer;
-          const negoDoneUser2 = RoomManager.getInstance()
-            .rooms.get(this.spaceId!)
-            ?.find((u) => u.userId === negoDoneUser);
-          if (negoDoneUser2) {
-            negoDoneUser2.send({
-              type: "peer:nego:final",
-              payload: { from: this.userId!, answer: negoDoneAnswer },
-            });
           }
           break;
 

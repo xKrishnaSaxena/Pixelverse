@@ -97,33 +97,84 @@ export const Arena = () => {
   const usersAnimationRef = useRef(new Map<string, any>());
   const MOVE_DURATION = 200;
 
+  const checkMediaPermissions = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+      stream.getTracks().forEach((track) => track.stop());
+      return true;
+    } catch (error) {
+      console.error("Media permission error:", error);
+      if (error instanceof Error) {
+        setGlobalMessages((prev) => [
+          ...prev,
+          {
+            userId: "SYSTEM",
+            message: `Camera/Microphone access denied: ${error.message}`,
+            timestamp: Date.now(),
+          },
+        ]);
+      }
+      return false;
+    }
+  };
+
   const handleCallUser = useCallback(
     async (recipient: string) => {
       if (callStatus !== "idle" || !wsRef.current) return;
+
+      const hasPermission = await checkMediaPermissions();
+      if (!hasPermission) {
+        setGlobalMessages((prev) => [
+          ...prev,
+          {
+            userId: "SYSTEM",
+            message: "Please allow camera and microphone access to make calls",
+            timestamp: Date.now(),
+          },
+        ]);
+        return;
+      }
 
       setCallStatus("calling");
       setRemoteUserId(recipient);
       peer.resetPeer();
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
-      setLocalStream(stream);
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
+        setLocalStream(stream);
 
-      const currentPeer = peer.getPeer()!;
-      stream
-        .getTracks()
-        .forEach((track) => currentPeer.addTrack(track, stream));
+        const currentPeer = peer.getPeer()!;
+        stream
+          .getTracks()
+          .forEach((track) => currentPeer.addTrack(track, stream));
 
-      const offer = await peer.getOffer();
+        const offer = await peer.getOffer();
 
-      wsRef.current.send(
-        JSON.stringify({
-          type: "call-user",
-          payload: { targetUserId: recipient, offer },
-        })
-      );
+        wsRef.current.send(
+          JSON.stringify({
+            type: "call-user",
+            payload: { targetUserId: recipient, offer },
+          })
+        );
+      } catch (error) {
+        console.error("Error initiating call:", error);
+        setCallStatus("idle");
+        setRemoteUserId(null);
+        setGlobalMessages((prev) => [
+          ...prev,
+          {
+            userId: "SYSTEM",
+            message: `Failed to start call: ${error instanceof Error ? error.message : "Unknown error"}`,
+            timestamp: Date.now(),
+          },
+        ]);
+      }
     },
     [callStatus]
   );
@@ -137,31 +188,55 @@ export const Arena = () => {
   const acceptCall = useCallback(async () => {
     if (!incomingOffer || !incomingCallFrom || !wsRef.current) return;
 
+    const hasPermission = await checkMediaPermissions();
+    if (!hasPermission) {
+      declineCall();
+      return;
+    }
+
     setCallStatus("in-call");
     setRemoteUserId(incomingCallFrom);
 
     peer.resetPeer();
 
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true,
-    });
-    setLocalStream(stream);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+      setLocalStream(stream);
 
-    const currentPeer = peer.getPeer()!;
-    stream.getTracks().forEach((track) => currentPeer.addTrack(track, stream));
+      const currentPeer = peer.getPeer()!;
+      stream
+        .getTracks()
+        .forEach((track) => currentPeer.addTrack(track, stream));
 
-    const answer = await peer.getAnswer(incomingOffer);
+      const answer = await peer.getAnswer(incomingOffer);
 
-    wsRef.current.send(
-      JSON.stringify({
-        type: "call-accepted",
-        payload: { toUserId: incomingCallFrom, answer },
-      })
-    );
+      wsRef.current.send(
+        JSON.stringify({
+          type: "call-accepted",
+          payload: { toUserId: incomingCallFrom, answer },
+        })
+      );
 
-    setIncomingCallFrom(null);
-    setIncomingOffer(null);
+      setIncomingCallFrom(null);
+      setIncomingOffer(null);
+    } catch (error) {
+      console.error("Error accepting call:", error);
+      setCallStatus("idle");
+      setRemoteUserId(null);
+      setIncomingCallFrom(null);
+      setIncomingOffer(null);
+      setGlobalMessages((prev) => [
+        ...prev,
+        {
+          userId: "SYSTEM",
+          message: `Failed to accept call: ${error instanceof Error ? error.message : "Unknown error"}`,
+          timestamp: Date.now(),
+        },
+      ]);
+    }
   }, [incomingOffer, incomingCallFrom]);
 
   const declineCall = useCallback(() => {
@@ -228,12 +303,20 @@ export const Arena = () => {
     const currentPeer = peer.getPeer()!;
 
     currentPeer.ontrack = (event) => {
+      console.log("Received remote track:", event.track.kind);
       const [remoteStream] = event.streams;
-      setRemoteStream(remoteStream);
+      if (remoteStream) {
+        console.log(
+          "Setting remote stream with tracks:",
+          remoteStream.getTracks().length
+        );
+        setRemoteStream(remoteStream);
+      }
     };
 
     currentPeer.onicecandidate = (event) => {
       if (event.candidate && remoteUserId && wsRef.current) {
+        console.log("Sending ICE candidate");
         wsRef.current.send(
           JSON.stringify({
             type: "ice-candidate",
@@ -243,6 +326,8 @@ export const Arena = () => {
             },
           })
         );
+      } else if (!event.candidate) {
+        console.log("All ICE candidates have been sent");
       }
     };
 
@@ -342,7 +427,7 @@ export const Arena = () => {
   }, [isLoading, token, spaceId]);
 
   const handleWebSocketMessage = useCallback(
-    (message: any) => {
+    async (message: any) => {
       const currentTime = Date.now();
       switch (message.type) {
         case "space-joined":
@@ -618,10 +703,11 @@ export const Arena = () => {
 
         case "ice-candidate":
           if (peer.getPeer() && message.payload.candidate) {
-            peer
-              .getPeer()
-              ?.addIceCandidate(new RTCIceCandidate(message.payload.candidate))
-              .catch((err) => console.warn("ICE candidate failed:", err));
+            try {
+              await peer.addIceCandidate(message.payload.candidate);
+            } catch (err) {
+              console.error("Failed to add ICE candidate:", err);
+            }
           }
           break;
 
