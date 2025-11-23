@@ -22,6 +22,8 @@ jobs:
           file: ./docker/Dockerfile.frontend
           push: true
           tags: krishnasaxena/pixelverse-frontend:${{ github.sha }}
+          build-args: |
+            VITE_TURN_API_KEY=${{ secrets.TURN_API_KEY }}
       - name: Deploy to the VM
         env:
           PORT: 3000
