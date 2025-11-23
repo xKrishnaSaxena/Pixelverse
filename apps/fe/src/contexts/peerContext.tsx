@@ -1,53 +1,54 @@
-const API_KEY = import.meta.env.VITE_TURN_API_KEY;
-
 class PeerService {
-  peer: RTCPeerConnection | null = null;
+  private peer: RTCPeerConnection | null = null;
 
-  constructor() {}
-  private async ensurePeerInitialized() {
-    if (this.peer) return;
-
-    try {
-      const response = await fetch(
-        `https://pixelverse.metered.live/api/v1/turn/credentials?apiKey=${API_KEY}`
-      );
-      const iceServers = await response.json();
-
-      this.peer = new RTCPeerConnection({
-        iceServers: iceServers,
-      });
-    } catch (error) {
-      console.error("Failed to fetch ICE servers:", error);
-    }
+  constructor() {
+    this.createPeer();
   }
 
-  async getAnswer(offer: any) {
-    await this.ensurePeerInitialized();
+  private createPeer() {
+    this.peer = new RTCPeerConnection({
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun2.l.google.com:19302" },
+        { urls: "stun:stun.stunprotocol.org" },
+      ],
+    });
 
-    if (this.peer) {
-      await this.peer.setRemoteDescription(offer);
-      const ans = await this.peer.createAnswer();
-      await this.peer.setLocalDescription(new RTCSessionDescription(ans));
-      return ans;
-    }
+    this.peer.ontrack = null;
+    this.peer.onicecandidate = null;
+    this.peer.onnegotiationneeded = null;
   }
 
-  async setRemoteDescription(ans: any) {
-    await this.ensurePeerInitialized();
-
+  resetPeer() {
     if (this.peer) {
-      await this.peer.setRemoteDescription(new RTCSessionDescription(ans));
+      this.peer.close();
     }
+    this.createPeer();
+  }
+
+  getPeer() {
+    return this.peer;
   }
 
   async getOffer() {
-    await this.ensurePeerInitialized();
+    if (!this.peer) throw new Error("Peer not initialized");
+    const offer = await this.peer.createOffer();
+    await this.peer.setLocalDescription(offer);
+    return offer;
+  }
 
-    if (this.peer) {
-      const offer = await this.peer.createOffer();
-      await this.peer.setLocalDescription(new RTCSessionDescription(offer));
-      return offer;
-    }
+  async getAnswer(offer: RTCSessionDescriptionInit) {
+    if (!this.peer) throw new Error("Peer not initialized");
+    await this.peer.setRemoteDescription(offer);
+    const answer = await this.peer.createAnswer();
+    await this.peer.setLocalDescription(answer);
+    return answer;
+  }
+
+  async setRemoteAnswer(answer: RTCSessionDescriptionInit) {
+    if (!this.peer) return;
+    await this.peer.setRemoteDescription(answer);
   }
 }
 

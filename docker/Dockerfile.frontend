@@ -6,8 +6,6 @@ COPY ./package.json ./package.json
 COPY ./turbo.json ./turbo.json
 COPY ./apps/fe ./apps/fe
 RUN npm install
-ARG VITE_TURN_API_KEY 
-ENV VITE_TURN_API_KEY=$VITE_TURN_API_KEY
 RUN npm run build
 RUN npm install -g serve
 EXPOSE 3000
