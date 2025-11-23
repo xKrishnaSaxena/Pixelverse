@@ -142,6 +142,35 @@ export const Arena = () => {
       setRemoteUserId(recipient);
       peer.resetPeer();
 
+      const currentPeer = peer.getPeer()!;
+
+      currentPeer.ontrack = (event) => {
+        console.log("Received remote track:", event.track.kind);
+        const [stream] = event.streams;
+        if (stream) {
+          console.log(
+            "Setting remote stream with tracks:",
+            stream.getTracks().length
+          );
+          setRemoteStream(stream);
+        }
+      };
+
+      currentPeer.onicecandidate = (event) => {
+        if (event.candidate && wsRef.current) {
+          console.log("Sending ICE candidate");
+          wsRef.current.send(
+            JSON.stringify({
+              type: "ice-candidate",
+              payload: {
+                candidate: event.candidate.toJSON(),
+                toUserId: recipient,
+              },
+            })
+          );
+        }
+      };
+
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: true,
@@ -198,6 +227,34 @@ export const Arena = () => {
     setRemoteUserId(incomingCallFrom);
 
     peer.resetPeer();
+    const currentPeer = peer.getPeer()!;
+
+    currentPeer.ontrack = (event) => {
+      console.log("Received remote track:", event.track.kind);
+      const [stream] = event.streams;
+      if (stream) {
+        console.log(
+          "Setting remote stream with tracks:",
+          stream.getTracks().length
+        );
+        setRemoteStream(stream);
+      }
+    };
+
+    currentPeer.onicecandidate = (event) => {
+      if (event.candidate && wsRef.current) {
+        console.log("Sending ICE candidate");
+        wsRef.current.send(
+          JSON.stringify({
+            type: "ice-candidate",
+            payload: {
+              candidate: event.candidate.toJSON(),
+              toUserId: incomingCallFrom,
+            },
+          })
+        );
+      }
+    };
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -255,7 +312,9 @@ export const Arena = () => {
 
   const handleCallAccepted = useCallback(
     async ({ answer }: { answer: any }) => {
+      console.log("Processing call accepted with answer");
       await peer.setRemoteAnswer(answer);
+      console.log("Remote answer set, buffered candidates should be processed");
       setCallStatus("in-call");
     },
     []
@@ -296,46 +355,6 @@ export const Arena = () => {
     setCallStatus("idle");
     setRemoteUserId(null);
   }, [callStatus, localStream, remoteUserId]);
-
-  useEffect(() => {
-    if (!peer.getPeer()) return;
-
-    const currentPeer = peer.getPeer()!;
-
-    currentPeer.ontrack = (event) => {
-      console.log("Received remote track:", event.track.kind);
-      const [remoteStream] = event.streams;
-      if (remoteStream) {
-        console.log(
-          "Setting remote stream with tracks:",
-          remoteStream.getTracks().length
-        );
-        setRemoteStream(remoteStream);
-      }
-    };
-
-    currentPeer.onicecandidate = (event) => {
-      if (event.candidate && remoteUserId && wsRef.current) {
-        console.log("Sending ICE candidate");
-        wsRef.current.send(
-          JSON.stringify({
-            type: "ice-candidate",
-            payload: {
-              candidate: event.candidate.toJSON(),
-              toUserId: remoteUserId,
-            },
-          })
-        );
-      } else if (!event.candidate) {
-        console.log("All ICE candidates have been sent");
-      }
-    };
-
-    return () => {
-      currentPeer.ontrack = null;
-      currentPeer.onicecandidate = null;
-    };
-  }, [remoteUserId, callStatus]);
 
   useEffect(() => {
     for (let i = 0; i < PARTICLE_COUNT; i++) {
@@ -703,11 +722,14 @@ export const Arena = () => {
 
         case "ice-candidate":
           if (peer.getPeer() && message.payload.candidate) {
+            console.log("Received ICE candidate from:", message.payload.from);
             try {
               await peer.addIceCandidate(message.payload.candidate);
             } catch (err) {
               console.error("Failed to add ICE candidate:", err);
             }
+          } else {
+            console.warn("Received ICE candidate but peer not ready");
           }
           break;
 

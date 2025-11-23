@@ -15,16 +15,6 @@ class PeerService {
         {
           urls: "stun:stun1.l.google.com:19302",
         },
-        {
-          urls: "turn:global.relay.metered.ca:80",
-          username: "ccc312127ec1bfa1e5ca89bf",
-          credential: "v+gRS02yJ7JZB0Za",
-        },
-        {
-          urls: "turn:global.relay.metered.ca:443",
-          username: "ccc312127ec1bfa1e5ca89bf",
-          credential: "v+gRS02yJ7JZB0Za",
-        },
       ],
     });
 
@@ -67,6 +57,7 @@ class PeerService {
     if (!this.peer) throw new Error("Peer not initialized");
     const offer = await this.peer.createOffer();
     await this.peer.setLocalDescription(offer);
+    this.isRemoteDescriptionSet = false;
     return offer;
   }
 
