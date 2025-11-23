@@ -8,7 +8,6 @@ class PeerService {
   private createPeer() {
     this.peer = new RTCPeerConnection({
       iceServers: [
-        { urls: "stun:stun.stunprotocol.org" },
         {
           urls: "turn:global.relay.metered.ca:80",
           username: "ccc312127ec1bfa1e5ca89bf",
