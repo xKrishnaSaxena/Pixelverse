@@ -8,10 +8,27 @@ class PeerService {
   private createPeer() {
     this.peer = new RTCPeerConnection({
       iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun1.l.google.com:19302" },
-        { urls: "stun:stun2.l.google.com:19302" },
         { urls: "stun:stun.stunprotocol.org" },
+        {
+          urls: "turn:global.relay.metered.ca:80",
+          username: "ccc312127ec1bfa1e5ca89bf",
+          credential: "v+gRS02yJ7JZB0Za",
+        },
+        {
+          urls: "turn:global.relay.metered.ca:80?transport=tcp",
+          username: "ccc312127ec1bfa1e5ca89bf",
+          credential: "v+gRS02yJ7JZB0Za",
+        },
+        {
+          urls: "turn:global.relay.metered.ca:443",
+          username: "ccc312127ec1bfa1e5ca89bf",
+          credential: "v+gRS02yJ7JZB0Za",
+        },
+        {
+          urls: "turns:global.relay.metered.ca:443?transport=tcp",
+          username: "ccc312127ec1bfa1e5ca89bf",
+          credential: "v+gRS02yJ7JZB0Za",
+        },
       ],
     });
 
