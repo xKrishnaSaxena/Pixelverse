@@ -141,35 +141,7 @@ export const Arena = () => {
       setCallStatus("calling");
       setRemoteUserId(recipient);
       peer.resetPeer();
-
-      const currentPeer = peer.getPeer()!;
-
-      currentPeer.ontrack = (event) => {
-        console.log("Received remote track:", event.track.kind);
-        const [stream] = event.streams;
-        if (stream) {
-          console.log(
-            "Setting remote stream with tracks:",
-            stream.getTracks().length
-          );
-          setRemoteStream(stream);
-        }
-      };
-
-      currentPeer.onicecandidate = (event) => {
-        if (event.candidate && wsRef.current) {
-          console.log("Sending ICE candidate");
-          wsRef.current.send(
-            JSON.stringify({
-              type: "ice-candidate",
-              payload: {
-                candidate: event.candidate.toJSON(),
-                toUserId: recipient,
-              },
-            })
-          );
-        }
-      };
+      setupPeerHandlers(recipient);
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -228,6 +200,20 @@ export const Arena = () => {
 
     peer.resetPeer();
     const currentPeer = peer.getPeer()!;
+
+    currentPeer.onicecandidate = (event) => {
+      if (event.candidate && wsRef.current) {
+        wsRef.current.send(
+          JSON.stringify({
+            type: "ice-candidate",
+            payload: {
+              candidate: event.candidate.toJSON(),
+              toUserId: incomingCallFrom,
+            },
+          })
+        );
+      }
+    };
 
     currentPeer.ontrack = (event) => {
       console.log("Received remote track:", event.track.kind);
@@ -444,6 +430,56 @@ export const Arena = () => {
     };
     return () => wsRef.current?.close();
   }, [isLoading, token, spaceId]);
+
+  const setupPeerHandlers = useCallback((targetUserId: string) => {
+    const pc = peer.getPeer();
+    if (!pc) {
+      console.error("PeerConnection is null");
+      return;
+    }
+
+    pc.ontrack = null;
+    pc.onicecandidate = null;
+    pc.ontrack = (event) => {
+      console.log("Received remote track:", event.track.kind);
+      const [remoteStream] = event.streams;
+      if (remoteStream) {
+        console.log(
+          "Setting remote stream with",
+          remoteStream.getTracks().length,
+          "tracks"
+        );
+        setRemoteStream(remoteStream);
+      }
+    };
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
+        console.log("Sending ICE candidate to", targetUserId);
+        wsRef.current.send(
+          JSON.stringify({
+            type: "ice-candidate",
+            payload: {
+              candidate: event.candidate.toJSON(),
+              toUserId: targetUserId,
+            },
+          })
+        );
+      }
+    };
+
+    pc.onconnectionstatechange = () => {
+      console.log("Peer connection state:", pc.connectionState);
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log("ICE connection state:", pc.iceConnectionState);
+      if (pc.iceConnectionState === "failed") {
+        console.warn("ICE failed — restarting ICE");
+        pc.restartIce();
+      }
+    };
+  }, []);
 
   const handleWebSocketMessage = useCallback(
     async (message: any) => {
