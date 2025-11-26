@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAvatar } from "../contexts/AvatarsContext";
 import { useAuth } from "../contexts/AuthContext";
-import ReactPlayer from "react-player";
 import peer from "../contexts/peerContext";
 import { useNavigate } from "react-router-dom";
 
