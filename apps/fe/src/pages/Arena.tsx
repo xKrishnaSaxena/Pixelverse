@@ -19,6 +19,36 @@ interface Particle {
   speedY: number;
   opacity: number;
 }
+const VideoPlayer = ({
+  stream,
+  muted = false,
+}: {
+  stream: MediaStream | null;
+  muted?: boolean;
+}) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
+
+  return (
+    <video
+      ref={videoRef}
+      autoPlay
+      playsInline
+      muted={muted}
+      style={{
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+        transform: "scaleX(-1)",
+      }}
+    />
+  );
+};
 
 export const Arena = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -224,6 +254,8 @@ export const Arena = () => {
           stream.getTracks().length
         );
         setRemoteStream(stream);
+      } else {
+        setRemoteStream(new MediaStream([event.track]));
       }
     };
 
@@ -450,6 +482,8 @@ export const Arena = () => {
           "tracks"
         );
         setRemoteStream(remoteStream);
+      } else {
+        setRemoteStream(new MediaStream([event.track]));
       }
     };
 
@@ -1376,15 +1410,9 @@ export const Arena = () => {
                   <div className="flex gap-4">
                     <div>
                       <p className="text-sm text-gray-400 mb-1">You</p>
-                      <div className="w-64 h-48 bg-black rounded overflow-hidden">
+                      <div className="w-64 h-48 bg-black rounded overflow-hidden border border-gray-700">
                         {localStream && (
-                          <ReactPlayer
-                            playing
-                            muted
-                            height="100%"
-                            width="100%"
-                            url={localStream}
-                          />
+                          <VideoPlayer stream={localStream} muted={true} />
                         )}
                       </div>
                     </div>
@@ -1392,21 +1420,20 @@ export const Arena = () => {
                       <p className="text-sm text-gray-400 mb-1">
                         {remoteUserId}
                       </p>
-                      <div className="w-64 h-48 bg-black rounded overflow-hidden">
-                        {remoteStream && (
-                          <ReactPlayer
-                            playing
-                            height="100%"
-                            width="100%"
-                            url={remoteStream}
-                          />
+                      <div className="w-64 h-48 bg-black rounded overflow-hidden border border-gray-700">
+                        {remoteStream ? (
+                          <VideoPlayer stream={remoteStream} muted={false} />
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-gray-500">
+                            Loading video...
+                          </div>
                         )}
                       </div>
                     </div>
                   </div>
                   <button
                     onClick={handleEndCall}
-                    className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                    className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors font-bold shadow-md"
                   >
                     End Call
                   </button>

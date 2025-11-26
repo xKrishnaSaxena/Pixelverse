@@ -75,6 +75,16 @@ class PeerService {
     if (!this.peer) throw new Error("Peer not initialized");
     await this.peer.setRemoteDescription(offer);
     this.isRemoteDescriptionSet = true;
+    for (const candidate of this.pendingCandidates) {
+      try {
+        await this.peer.addIceCandidate(candidate);
+        console.log("Added buffered ICE candidate (Answer side)");
+      } catch (err) {
+        console.warn("Failed to add buffered candidate:", err);
+      }
+    }
+    this.pendingCandidates = [];
+
     const answer = await this.peer.createAnswer();
     await this.peer.setLocalDescription(answer);
     return answer;
