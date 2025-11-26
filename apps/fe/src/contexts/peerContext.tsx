@@ -2,6 +2,7 @@ class PeerService {
   private peer: RTCPeerConnection | null = null;
   private pendingCandidates: RTCIceCandidate[] = [];
   private isRemoteDescriptionSet: boolean = false;
+  private onRemoteStreamCallback: ((stream: MediaStream) => void) | null = null;
   constructor() {
     this.createPeer();
   }
@@ -27,6 +28,17 @@ class PeerService {
         },
       ],
     });
+    this.peer.ontrack = (event) => {
+      console.log("Received remote track:", event.track.kind);
+      if (event.streams && event.streams[0]) {
+        const remoteStream = event.streams[0];
+        console.log("Remote stream with tracks:", remoteStream.getTracks());
+
+        if (this.onRemoteStreamCallback) {
+          this.onRemoteStreamCallback(remoteStream);
+        }
+      }
+    };
 
     this.peer.onconnectionstatechange = () => {
       console.log("Connection state:", this.peer?.connectionState);

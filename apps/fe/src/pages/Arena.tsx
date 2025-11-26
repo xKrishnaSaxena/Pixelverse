@@ -214,6 +214,31 @@ export const Arena = () => {
     }
     navigate("/");
   };
+  useEffect(() => {
+    if (localStream) {
+      console.log(
+        "Local stream updated - tracks:",
+        localStream.getTracks().map((t) => ({
+          kind: t.kind,
+          enabled: t.enabled,
+          readyState: t.readyState,
+        }))
+      );
+    }
+  }, [localStream]);
+
+  useEffect(() => {
+    if (remoteStream) {
+      console.log(
+        "Remote stream updated - tracks:",
+        remoteStream.getTracks().map((t) => ({
+          kind: t.kind,
+          enabled: t.enabled,
+          readyState: t.readyState,
+        }))
+      );
+    }
+  }, [remoteStream]);
 
   const acceptCall = useCallback(async () => {
     if (!incomingOffer || !incomingCallFrom || !wsRef.current) return;
@@ -246,16 +271,12 @@ export const Arena = () => {
 
     currentPeer.ontrack = (event) => {
       console.log("Received remote track:", event.track.kind);
-      const [stream] = event.streams;
-      if (stream) {
-        console.log(
-          "Setting remote stream with tracks:",
-          stream.getTracks().length
-        );
-        setRemoteStream(stream);
-      } else {
-        setRemoteStream(new MediaStream([event.track]));
-      }
+      const remoteStream = new MediaStream();
+      event.streams[0].getTracks().forEach((track) => {
+        remoteStream.addTrack(track);
+        console.log("Added track to remote stream:", track.kind);
+      });
+      setRemoteStream(remoteStream);
     };
 
     currentPeer.onicecandidate = (event) => {
@@ -473,17 +494,12 @@ export const Arena = () => {
     pc.onicecandidate = null;
     pc.ontrack = (event) => {
       console.log("Received remote track:", event.track.kind);
-      const [remoteStream] = event.streams;
-      if (remoteStream) {
-        console.log(
-          "Setting remote stream with",
-          remoteStream.getTracks().length,
-          "tracks"
-        );
-        setRemoteStream(remoteStream);
-      } else {
-        setRemoteStream(new MediaStream([event.track]));
-      }
+      const remoteStream = new MediaStream();
+      event.streams[0].getTracks().forEach((track) => {
+        remoteStream.addTrack(track);
+        console.log("Added track to remote stream:", track.kind);
+      });
+      setRemoteStream(remoteStream);
     };
 
     pc.onicecandidate = (event) => {
