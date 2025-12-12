@@ -28,6 +28,8 @@ import {
   Square,
   Download,
   ArrowLeftRight,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 
 // --- Constants ---
@@ -89,7 +91,7 @@ export const Arena = () => {
   const [hoveredUser, setHoveredUser] = useState<string | null>(null);
   const [nearbyUsers, setNearbyUsers] = useState<Set<string>>(new Set());
   const [isKicked, setIsKicked] = useState(false);
-
+  const [isExpanded, setIsExpanded] = useState(false);
   // --- Chat State ---
   const [globalMessages, setGlobalMessages] = useState<any[]>([]);
   const [privateMessages, setPrivateMessages] = useState<any[]>([]);
@@ -1211,53 +1213,98 @@ export const Arena = () => {
 
             {/* In-Call Overlay */}
             {callStatus === "in-call" && (
-              <div className="absolute bottom-6 right-6 w-[480px] bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-4 flex flex-col gap-3 z-50">
-                {/* Main Video Area (Remote by default, Local if swapped) */}
-                <div className="relative aspect-video bg-black rounded-xl overflow-hidden group">
+              <div
+                className={`absolute transition-all duration-300 ease-in-out z-50 flex flex-col gap-3 shadow-2xl
+                  ${
+                    isExpanded
+                      ? "top-0 left-0 w-full h-full bg-gray-900 p-4 rounded-none" // Expanded Styles
+                      : "bottom-6 right-6 w-[480px] bg-slate-900/95 border border-slate-700 rounded-2xl p-4" // Minimized Styles
+                  }
+                `}
+              >
+                {/* Main Video Area */}
+                <div
+                  className={`relative overflow-hidden group bg-black rounded-xl ${
+                    isExpanded ? "flex-1 w-full" : "aspect-video"
+                  }`}
+                >
                   <video
                     ref={mainVideoRef}
                     autoPlay
                     playsInline
-                    muted={isVideoSwapped} // Mute if showing local
-                    className={`w-full h-full object-cover ${isVideoSwapped ? "scale-x-[-1]" : ""}`}
+                    muted={isVideoSwapped}
+                    className={`w-full h-full ${
+                      isExpanded ? "object-contain" : "object-cover"
+                    } ${isVideoSwapped ? "scale-x-[-1]" : ""}`}
                   />
-                  <div className="absolute top-2 left-2 bg-black/60 px-2 py-1 rounded text-xs">
+
+                  {/* Label */}
+                  <div className="absolute top-4 left-4 bg-black/60 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm">
                     {isVideoSwapped ? "You" : remoteUserId}
+                  </div>
+
+                  {/* PIP Video Area (Draggable conceptually, but absolute for now) */}
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsVideoSwapped(!isVideoSwapped);
+                    }}
+                    className={`absolute cursor-pointer hover:border-indigo-500 transition-all bg-slate-800 rounded-lg overflow-hidden border border-slate-600 shadow-xl z-10
+                      ${
+                        isExpanded
+                          ? "bottom-4 right-4 w-64 aspect-video"
+                          : "top-4 right-4 w-32 aspect-video"
+                      }
+                    `}
+                  >
+                    <video
+                      ref={pipVideoRef}
+                      autoPlay
+                      playsInline
+                      muted={!isVideoSwapped}
+                      className={`w-full h-full object-cover ${
+                        !isVideoSwapped && !screenShareActive
+                          ? "scale-x-[-1]"
+                          : ""
+                      }`}
+                    />
                   </div>
                 </div>
 
-                {/* PIP Video Area (Local by default, Remote if swapped) */}
-                {/* Click to SWAP */}
+                {/* Controls Bar */}
                 <div
-                  onClick={() => setIsVideoSwapped(!isVideoSwapped)}
-                  className="absolute top-8 right-8 w-32 aspect-video bg-slate-800 rounded-lg overflow-hidden border border-slate-600 shadow-xl cursor-pointer hover:border-indigo-500 transition-all"
+                  className={`flex justify-center gap-2 ${isExpanded ? "py-2" : ""}`}
                 >
-                  <video
-                    ref={pipVideoRef}
-                    autoPlay
-                    playsInline
-                    muted={!isVideoSwapped} // Mute if showing local
-                    className={`w-full h-full object-cover ${!isVideoSwapped && !screenShareActive ? "scale-x-[-1]" : ""}`}
-                  />
-                </div>
-
-                {/* Controls */}
-                <div className="flex justify-center gap-2">
                   <button
                     onClick={toggleMic}
-                    className={`p-3 rounded-full transition ${micActive ? "bg-slate-700 hover:bg-slate-600" : "bg-red-500/20 text-red-500"}`}
+                    className={`p-3 rounded-full transition ${
+                      micActive
+                        ? "bg-slate-700 hover:bg-slate-600"
+                        : "bg-red-500/20 text-red-500"
+                    }`}
+                    title="Toggle Mic"
                   >
                     {micActive ? <Mic size={20} /> : <MicOff size={20} />}
                   </button>
                   <button
                     onClick={toggleVideo}
-                    className={`p-3 rounded-full transition ${videoActive ? "bg-slate-700 hover:bg-slate-600" : "bg-red-500/20 text-red-500"}`}
+                    className={`p-3 rounded-full transition ${
+                      videoActive
+                        ? "bg-slate-700 hover:bg-slate-600"
+                        : "bg-red-500/20 text-red-500"
+                    }`}
+                    title="Toggle Camera"
                   >
                     {videoActive ? <Video size={20} /> : <VideoOff size={20} />}
                   </button>
                   <button
                     onClick={toggleScreenShare}
-                    className={`p-3 rounded-full transition ${screenShareActive ? "bg-green-500/20 text-green-500" : "bg-slate-700 hover:bg-slate-600"}`}
+                    className={`p-3 rounded-full transition ${
+                      screenShareActive
+                        ? "bg-green-500/20 text-green-500"
+                        : "bg-slate-700 hover:bg-slate-600"
+                    }`}
+                    title="Share Screen"
                   >
                     {screenShareActive ? (
                       <MonitorOff size={20} />
@@ -1265,22 +1312,47 @@ export const Arena = () => {
                       <MonitorUp size={20} />
                     )}
                   </button>
-                  {/* Swap Button for explicit control */}
+
+                  {/* Video Swap Button */}
                   <button
                     onClick={() => setIsVideoSwapped(!isVideoSwapped)}
                     className="p-3 rounded-full bg-slate-700 hover:bg-slate-600"
+                    title="Swap Views"
                   >
                     <ArrowLeftRight size={20} />
                   </button>
+
+                  {/* Recording Button */}
                   <button
                     onClick={isRecording ? stopRecording : startRecording}
-                    className={`p-3 rounded-full transition ${isRecording ? "bg-red-600 text-white animate-pulse" : "bg-slate-700 hover:bg-slate-600"}`}
+                    className={`p-3 rounded-full transition ${
+                      isRecording
+                        ? "bg-red-600 text-white animate-pulse"
+                        : "bg-slate-700 hover:bg-slate-600"
+                    }`}
+                    title="Record Call"
                   >
                     {isRecording ? <Square size={20} /> : <Circle size={20} />}
                   </button>
+
+                  {/* Maximize/Minimize Button */}
+                  <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="p-3 rounded-full bg-slate-700 hover:bg-slate-600 text-blue-400"
+                    title={isExpanded ? "Minimize" : "Maximize"}
+                  >
+                    {isExpanded ? (
+                      <Minimize2 size={20} />
+                    ) : (
+                      <Maximize2 size={20} />
+                    )}
+                  </button>
+
+                  {/* End Call Button */}
                   <button
                     onClick={handleEndCall}
                     className="p-3 rounded-full bg-red-600 hover:bg-red-700 text-white"
+                    title="End Call"
                   >
                     <PhoneOff size={20} />
                   </button>
