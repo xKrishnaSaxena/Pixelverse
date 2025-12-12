@@ -251,8 +251,8 @@ export class User {
           break;
 
         case "move":
-          const moveX = parsedData.payload.x;
-          const moveY = parsedData.payload.y;
+          const moveX = parseInt(parsedData.payload.x);
+          const moveY = parseInt(parsedData.payload.y);
           const xDisplacement = Math.abs(this.x - moveX);
           const yDisplacement = Math.abs(this.y - moveY);
           if (
@@ -261,6 +261,12 @@ export class User {
           ) {
             this.x = moveX;
             this.y = moveY;
+
+            this.send({
+              type: "movement",
+              payload: { userId: this.userId, x: this.x, y: this.y },
+            });
+
             RoomManager.getInstance().broadcast(
               {
                 type: "movement",
@@ -269,107 +275,24 @@ export class User {
               this,
               this.spaceId!
             );
-            this.send({
-              type: "movement",
-              payload: { userId: this.userId, x: this.x, y: this.y },
-            });
-            return;
+            break;
           }
+
           this.send({
             type: "movement-rejected",
             payload: { x: this.x, y: this.y },
           });
           break;
 
-        case "call-user":
-          const targetUserId = parsedData.payload.targetUserId;
-          const offer = parsedData.payload.offer;
-          const targetUser = RoomManager.getInstance()
-            .rooms.get(this.spaceId!)
-            ?.find((u) => u.userId === targetUserId);
-          if (targetUser) {
-            targetUser.send({
-              type: "video-call-incoming",
-              payload: { from: this.userId!, offer },
-            });
-          }
+        case "call-started":
+          const p1 = parsedData.payload.user1;
+          const p2 = parsedData.payload.user2;
+          RoomManager.getInstance().startCall(this.spaceId!, p1, p2);
           break;
-
-        case "call-accepted":
-          const toUserId = parsedData.payload.toUserId;
-          const answer = parsedData.payload.answer;
-          const toUser = RoomManager.getInstance()
-            .rooms.get(this.spaceId!)
-            ?.find((u) => u.userId === toUserId);
-          if (toUser) {
-            toUser.send({
-              type: "call-accepted",
-              payload: { answer, from: this.userId! },
-            });
-            RoomManager.getInstance().startCall(
-              this.spaceId!,
-              this.userId!,
-              toUserId
-            );
-          }
-          break;
-
-        case "call-declined":
-          const declinedToUserId = parsedData.payload.toUserId;
-          const declinedUser = RoomManager.getInstance()
-            .rooms.get(this.spaceId!)
-            ?.find((u) => u.userId === declinedToUserId);
-          if (declinedUser) {
-            declinedUser.send({
-              type: "call-declined",
-              payload: { from: this.userId! },
-            });
-          }
-          break;
-
-        case "call-cancelled":
-          const cancelledToUserId = parsedData.payload.toUserId;
-          const cancelledUser = RoomManager.getInstance()
-            .rooms.get(this.spaceId!)
-            ?.find((u) => u.userId === cancelledToUserId);
-          if (cancelledUser) {
-            cancelledUser.send({
-              type: "call-cancelled",
-              payload: { from: this.userId! },
-            });
-          }
-          break;
-
-        case "call-end":
-          const endToUserId = parsedData.payload.toUserId;
-          const endUser = RoomManager.getInstance()
-            .rooms.get(this.spaceId!)
-            ?.find((u) => u.userId === endToUserId);
-          if (endUser) {
-            endUser.send({
-              type: "call-end",
-              payload: { from: this.userId! },
-            });
-            RoomManager.getInstance().endCall(
-              this.spaceId!,
-              this.userId!,
-              endToUserId
-            );
-          }
-          break;
-
-        case "ice-candidate":
-          const candidateToUserId = parsedData.payload.toUserId;
-          const candidate = parsedData.payload.candidate;
-          const candidateUser = RoomManager.getInstance()
-            .rooms.get(this.spaceId!)
-            ?.find((u) => u.userId === candidateToUserId);
-          if (candidateUser) {
-            candidateUser.send({
-              type: "ice-candidate",
-              payload: { candidate, from: this.userId! },
-            });
-          }
+        case "call-ended":
+          const u1 = parsedData.payload.user1;
+          const u2 = parsedData.payload.user2;
+          RoomManager.getInstance().endCall(this.spaceId!, u1, u2);
           break;
       }
     });
