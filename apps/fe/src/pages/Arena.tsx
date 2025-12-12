@@ -88,6 +88,7 @@ export const Arena = () => {
   const [users, setUsers] = useState(new Map<string, any>());
   const [spaceId, setSpaceId] = useState("");
   const [blockedUsers, setBlockedUsers] = useState<Set<string>>(new Set());
+  const blockedUsersRef = useRef<Set<string>>(new Set());
   const [hoveredUser, setHoveredUser] = useState<string | null>(null);
   const [nearbyUsers, setNearbyUsers] = useState<Set<string>>(new Set());
   const [isKicked, setIsKicked] = useState(false);
@@ -167,15 +168,27 @@ export const Arena = () => {
   // --- Firestore: Incoming Call Listener ---
   useEffect(() => {
     if (!currentUser?.userId) return;
+
     const q = query(
       collection(db, "calls"),
       where("receiverId", "==", currentUser.userId),
       where("status", "==", "offering")
     );
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === "added") {
           const data = change.doc.data();
+
+          if (blockedUsersRef.current.has(data.callerId)) {
+            console.log(`Blocked incoming call from ${data.callerId}`);
+
+            deleteDoc(change.doc.ref).catch((err) =>
+              console.error("Error auto-rejecting blocked call", err)
+            );
+            return;
+          }
+
           if (callStatus === "idle") {
             setIncomingCallDocId(change.doc.id);
             setRemoteUserId(data.callerId);
@@ -245,6 +258,9 @@ export const Arena = () => {
   // --- Action: Make Call ---
   const handleCallUser = useCallback(
     async (targetUserId: string) => {
+      if (blockedUsersRef.current.has(targetUserId)) return;
+
+      if (callStatus !== "idle") return;
       const stream = await startWebcam();
       if (!stream) return;
 
@@ -553,15 +569,18 @@ export const Arena = () => {
   const toggleBlockUser = (userId: string) => {
     setBlockedUsers((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(userId)) newSet.delete(userId);
-      else {
+      if (newSet.has(userId)) {
+        newSet.delete(userId);
+      } else {
         newSet.add(userId);
-        if (activeChatUser === userId) setActiveChatUser(null);
+        if (activeChatUser === userId) {
+          setActiveChatUser(null);
+        }
       }
+      blockedUsersRef.current = newSet;
       return newSet;
     });
   };
-
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const spaceIdFromUrl = urlParams.get("spaceId") || "";
@@ -652,16 +671,9 @@ export const Arena = () => {
           ]);
           break;
         case "chat-message":
-          if (message.payload.isGlobal) {
-            setGlobalMessages((prev) => [
-              ...prev,
-              {
-                userId: message.payload.userId,
-                message: message.payload.message,
-                timestamp: Date.now(),
-              },
-            ]);
-          } else {
+          if (!message.payload.isGlobal) {
+            if (blockedUsersRef.current.has(message.payload.userId)) return;
+
             setPrivateMessages((prev) => [
               ...prev,
               {
@@ -673,7 +685,28 @@ export const Arena = () => {
             if (!activeChatUser || activeChatUser !== message.payload.userId) {
               setActiveChatUser(message.payload.userId);
             }
+          } else {
+            if (blockedUsersRef.current.has(message.payload.userId)) return;
+
+            setGlobalMessages((prev) => [
+              ...prev,
+              {
+                userId: message.payload.userId,
+                message: message.payload.message,
+                timestamp: Date.now(),
+              },
+            ]);
           }
+          break;
+        case "chat-warning":
+          setGlobalMessages((prev) => [
+            ...prev,
+            {
+              userId: "SYSTEM",
+              message: message.payload.message,
+              timestamp: Date.now(),
+            },
+          ]);
           break;
         case "movement":
           const { userId, x, y } = message.payload;
@@ -729,12 +762,19 @@ export const Arena = () => {
             gridX: message.payload.x,
             gridY: message.payload.y,
           }));
-          // Reset animation target to sync with server reality
           currentUserAnimationRef.current.targetX = message.payload.x * 50;
           currentUserAnimationRef.current.targetY = message.payload.y * 50;
           break;
         case "kicked":
           setIsKicked(true);
+          setGlobalMessages((prev) => [
+            ...prev,
+            {
+              userId: "SYSTEM",
+              message: `You have been kicked: ${message.payload.reason}`,
+              timestamp: Date.now(),
+            },
+          ]);
           break;
       }
     },
