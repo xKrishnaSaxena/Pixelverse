@@ -104,11 +104,11 @@ export const Arena = () => {
 
   // --- WebRTC / Retina State ---
   const [callStatus, setCallStatus] = useState<"idle" | "incoming" | "in-call">(
-    "idle"
+    "idle",
   );
   const [remoteUserId, setRemoteUserId] = useState<string | null>(null);
   const [incomingCallDocId, setIncomingCallDocId] = useState<string | null>(
-    null
+    null,
   );
   const [currentCallDocId, setCurrentCallDocId] = useState<string | null>(null);
   const [userCallStatus, setUserCallStatus] = useState<
@@ -172,7 +172,7 @@ export const Arena = () => {
     const q = query(
       collection(db, "calls"),
       where("receiverId", "==", currentUser.userId),
-      where("status", "==", "offering")
+      where("status", "==", "offering"),
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -184,7 +184,7 @@ export const Arena = () => {
             console.log(`Blocked incoming call from ${data.callerId}`);
 
             deleteDoc(change.doc.ref).catch((err) =>
-              console.error("Error auto-rejecting blocked call", err)
+              console.error("Error auto-rejecting blocked call", err),
             );
             return;
           }
@@ -302,7 +302,7 @@ export const Arena = () => {
             JSON.stringify({
               type: "call-started",
               payload: { user1: currentUser.userId, user2: targetUserId },
-            })
+            }),
           );
         }
       });
@@ -316,7 +316,7 @@ export const Arena = () => {
         });
       });
     },
-    [currentUser]
+    [currentUser],
   );
 
   // --- Action: Accept Call ---
@@ -365,7 +365,7 @@ export const Arena = () => {
       JSON.stringify({
         type: "call-started",
         payload: { user1: currentUser.userId, user2: callData.callerId },
-      })
+      }),
     );
   }, [incomingCallDocId, currentUser]);
 
@@ -391,7 +391,7 @@ export const Arena = () => {
         JSON.stringify({
           type: "call-ended",
           payload: { user1: currentUser.userId, user2: remoteUserId },
-        })
+        }),
       );
     }
     if (currentCallDocId) {
@@ -540,7 +540,7 @@ export const Arena = () => {
             new Promise((resolve) => {
               img.onload = () => resolve();
               img.onerror = () => resolve();
-            })
+            }),
           );
           imageMap.set(url, img);
         }
@@ -590,10 +590,10 @@ export const Arena = () => {
   useEffect(() => {
     if (isLoading || !token || !spaceId) return;
 
-    wsRef.current = new WebSocket("wss://ws-pixelverse.stelliform.xyz");
+    wsRef.current = new WebSocket("ws://localhost:8081");
     wsRef.current.onopen = () => {
       wsRef.current!.send(
-        JSON.stringify({ type: "join", payload: { spaceId, token } })
+        JSON.stringify({ type: "join", payload: { spaceId, token } }),
       );
     };
     wsRef.current.onmessage = (event) => {
@@ -647,7 +647,7 @@ export const Arena = () => {
           const ongoingCalls = message.payload.ongoingCalls || [];
           ongoingCalls.forEach(([user1, user2]: [string, string]) => {
             setUserCallStatus((prev) =>
-              new Map(prev).set(user1, user2).set(user2, user1)
+              new Map(prev).set(user1, user2).set(user2, user1),
             );
           });
           break;
@@ -745,7 +745,7 @@ export const Arena = () => {
           setUserCallStatus((prev) =>
             new Map(prev)
               .set(message.payload.user1, message.payload.user2)
-              .set(message.payload.user2, message.payload.user1)
+              .set(message.payload.user2, message.payload.user1),
           );
           break;
         case "call-ended":
@@ -778,7 +778,7 @@ export const Arena = () => {
           break;
       }
     },
-    [currentUser, remoteUserId, handleEndCall]
+    [currentUser, remoteUserId, handleEndCall],
   );
 
   useEffect(() => {
@@ -806,7 +806,7 @@ export const Arena = () => {
       JSON.stringify({
         type: "move",
         payload: { x: newGridX, y: newGridY, userId: currentUser.userId },
-      })
+      }),
     );
   };
 
@@ -820,7 +820,7 @@ export const Arena = () => {
       JSON.stringify({
         type: "chat-message",
         payload: { message, recipient, isGlobal: false },
-      })
+      }),
     );
   };
 
@@ -830,7 +830,7 @@ export const Arena = () => {
       JSON.stringify({
         type: "chat-message",
         payload: { message, isGlobal: true },
-      })
+      }),
     );
   };
 
@@ -874,7 +874,7 @@ export const Arena = () => {
       const visualX = user.gridX * GRID_SIZE;
       const visualY = user.gridY * GRID_SIZE;
       const dist = Math.sqrt(
-        Math.pow(mouseX - visualX, 2) + Math.pow(mouseY - visualY, 2)
+        Math.pow(mouseX - visualX, 2) + Math.pow(mouseY - visualY, 2),
       );
       if (dist < AVATAR_SIZE / 2) {
         hovered = userId;
@@ -953,7 +953,7 @@ export const Arena = () => {
         0,
         0,
         canvas.width,
-        canvas.height
+        canvas.height,
       );
       gradient.addColorStop(0, "#0a192f");
       gradient.addColorStop(1, "#172a45");
@@ -1007,7 +1007,7 @@ export const Arena = () => {
           0,
           currentVisualX,
           currentVisualY,
-          AVATAR_SIZE * 2
+          AVATAR_SIZE * 2,
         );
         hologramGradient.addColorStop(0, "hsla(210, 100%, 50%, 0.3)");
         hologramGradient.addColorStop(1, "hsla(180, 100%, 50%, 0)");
@@ -1018,7 +1018,7 @@ export const Arena = () => {
           currentVisualY,
           AVATAR_SIZE + 5,
           0,
-          Math.PI * 2
+          Math.PI * 2,
         );
         ctx.fill();
         ctx.restore();
@@ -1030,7 +1030,7 @@ export const Arena = () => {
           currentVisualY,
           AVATAR_SIZE / 2,
           0,
-          Math.PI * 2
+          Math.PI * 2,
         );
         ctx.clip();
         if (image)
@@ -1039,7 +1039,7 @@ export const Arena = () => {
             currentVisualX - AVATAR_SIZE / 2,
             currentVisualY - AVATAR_SIZE / 2,
             AVATAR_SIZE,
-            AVATAR_SIZE
+            AVATAR_SIZE,
           );
         ctx.restore();
 
@@ -1079,7 +1079,7 @@ export const Arena = () => {
           visual.visualY,
           AVATAR_SIZE / 2,
           0,
-          Math.PI * 2
+          Math.PI * 2,
         );
         ctx.clip();
         if (image)
@@ -1088,7 +1088,7 @@ export const Arena = () => {
             visual.visualX - AVATAR_SIZE / 2,
             visual.visualY - AVATAR_SIZE / 2,
             AVATAR_SIZE,
-            AVATAR_SIZE
+            AVATAR_SIZE,
           );
         ctx.restore();
         if (hoveredUser === userId) {
@@ -1100,7 +1100,7 @@ export const Arena = () => {
             visual.visualY,
             AVATAR_SIZE / 2 + 5,
             0,
-            Math.PI * 2
+            Math.PI * 2,
           );
           ctx.stroke();
         }
@@ -1110,7 +1110,7 @@ export const Arena = () => {
         ctx.fillText(
           userId,
           visual.visualX,
-          visual.visualY + AVATAR_SIZE / 2 + 25
+          visual.visualY + AVATAR_SIZE / 2 + 25,
         );
       });
 

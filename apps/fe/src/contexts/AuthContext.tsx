@@ -58,14 +58,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (username: string, password: string) => {
     try {
-      const response = await fetch(
-        "https://api-pixelverse.stelliform.xyz/api/v1/signin",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
-        }
-      );
+      const response = await fetch("http://localhost:8080/api/v1/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
       const data = await response.json();
 
@@ -90,12 +87,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signup = async (username: string, password: string) => {
     try {
       const signupResponse = await fetch(
-        "https://api-pixelverse.stelliform.xyz/api/v1/signup",
+        "http://localhost:8080/api/v1/signup",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password, type: "user" }),
-        }
+        },
       );
 
       const signupData = await signupResponse.json();

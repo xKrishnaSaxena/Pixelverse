@@ -17,11 +17,11 @@ export const AvatarProvider = ({ children }: { children: ReactNode }) => {
       const usernamesString = usernames.join(",");
 
       const response = await fetch(
-        `https://api-pixelverse.stelliform.xyz/api/v1/user/metadata/bulk?userIds=${usernamesString}`
+        `http://localhost:8080/api/v1/user/metadata/bulk?userIds=${usernamesString}`,
       );
       if (!response.ok) {
         throw new Error(
-          `HTTP error! Status: ${response.status} - ${response.statusText}`
+          `HTTP error! Status: ${response.status} - ${response.statusText}`,
         );
       }
       const { avatars: avatarData } = await response.json();
@@ -30,7 +30,7 @@ export const AvatarProvider = ({ children }: { children: ReactNode }) => {
       avatarData.forEach(
         ({ username, avatarId }: { username: string; avatarId: string }) => {
           newAvatars.set(username, avatarId || "/gAvatarV2.png");
-        }
+        },
       );
       setAvatars(newAvatars);
     } catch (error) {

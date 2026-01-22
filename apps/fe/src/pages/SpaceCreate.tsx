@@ -15,9 +15,9 @@ export default function CreateSpace() {
     setIsCreating(true);
     try {
       const response = await axios.post(
-        "https://api-pixelverse.stelliform.xyz/api/v1/space",
+        "http://localhost:8080/api/v1/space",
         { name, dimensions },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       navigate(`/space/?spaceId=${response.data.spaceId}`);
     } catch (error) {

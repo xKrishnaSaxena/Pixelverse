@@ -25,10 +25,10 @@ export default function ManageSpace() {
     const fetchSpaceDetails = async () => {
       try {
         const response = await axios.get(
-          `https://api-pixelverse.stelliform.xyz/api/v1/space/${spaceId}`,
+          `http://localhost:8080/api/v1/space/${spaceId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
         setSpace(response.data);
       } catch (err) {
@@ -44,18 +44,18 @@ export default function ManageSpace() {
   const handleUnban = async (userId: string) => {
     try {
       await axios.post(
-        `https://api-pixelverse.stelliform.xyz/api/v1/space/${spaceId}/unban`,
+        `http://localhost:8080/api/v1/space/${spaceId}/unban`,
         { userId },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const response = await axios.get(
-        `https://api-pixelverse.stelliform.xyz/api/v1/space/${spaceId}`,
+        `http://localhost:8080/api/v1/space/${spaceId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       setSpace(response.data);
     } catch (err) {
